@@ -31,8 +31,9 @@ func main() {
 	}
 	fmt.Println("workflow ID:", run.GetID())
 	fmt.Println("run ID:", run.GetRunID())
-	if err := run.Get(ctx, nil); err != nil {
+	var choice string
+	if err := run.Get(ctx, &choice); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("order completed")
+	fmt.Println("order completed:", choice)
 }

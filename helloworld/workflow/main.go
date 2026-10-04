@@ -1,4 +1,4 @@
-// The upstream helloworld workflow, adapted to run as an ordinary isolate main.
+// The upstream helloworld workflow, adapted to run as a named isolate function.
 package main
 
 import (
@@ -7,11 +7,15 @@ import (
 	"github.com/mfateev/sdk-go-poc/workflow"
 )
 
+func init() {
+	workflow.RegisterTyped("HelloWorld", HelloWorld)
+}
+
 func main() {
-	name, err := workflow.Input()
-	var greeting []byte
-	if err == nil {
-		greeting, err = workflow.ExecuteActivity("HelloWorldActivity", name, 10*time.Second)
-	}
-	_ = workflow.Complete(greeting, err)
+	_ = workflow.Run()
+}
+
+func HelloWorld(name string) (string, error) {
+	greeting, err := workflow.ExecuteActivity("HelloWorldActivity", []byte(name), 10*time.Second)
+	return string(greeting), err
 }

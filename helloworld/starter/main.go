@@ -29,15 +29,15 @@ func main() {
 	run, err := c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
 		ID:        fmt.Sprintf("hello-world-poc-%d", time.Now().UnixNano()),
 		TaskQueue: "hello-world-poc",
-	}, "HelloWorld", []byte(name))
+	}, "HelloWorld", name)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("workflow ID:", run.GetID())
 	fmt.Println("run ID:", run.GetRunID())
-	var result []byte
+	var result string
 	if err := run.Get(ctx, &result); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(result))
+	fmt.Println(result)
 }

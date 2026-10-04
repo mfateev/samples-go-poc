@@ -22,7 +22,7 @@ func main() {
 		os.Exit(2)
 	}
 	replayer := worker.NewWorkflowReplayer()
-	replayer.RegisterWorkflowWithOptions(temporalbridge.Factory{Program: program}, goWorkflow.RegisterOptions{Name: os.Args[2]})
+	replayer.RegisterWorkflowWithOptions(temporalbridge.Factory{Program: program, EntryName: os.Args[2]}, goWorkflow.RegisterOptions{Name: os.Args[2]})
 	if err := replayer.ReplayWorkflowHistoryFromJSONFile(nil, os.Args[3]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

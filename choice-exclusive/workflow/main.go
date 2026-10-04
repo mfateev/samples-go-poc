@@ -8,14 +8,18 @@ import (
 	"github.com/mfateev/sdk-go-poc/workflow"
 )
 
-func main() {
-	_ = workflow.Complete(nil, placeOrder())
+func init() {
+	workflow.RegisterTyped0("ExclusiveChoice", ExclusiveChoice)
 }
 
-func placeOrder() error {
+func main() {
+	_ = workflow.Run()
+}
+
+func ExclusiveChoice() (string, error) {
 	choice, err := workflow.ExecuteActivity("GetOrder", nil, 10*time.Second)
 	if err != nil {
-		return err
+		return "", err
 	}
 	var activityName string
 	switch string(choice) {
@@ -28,8 +32,8 @@ func placeOrder() error {
 	case "orange":
 		activityName = "OrderOrange"
 	default:
-		return errors.New("unknown order choice: " + string(choice))
+		return "", errors.New("unknown order choice: " + string(choice))
 	}
 	_, err = workflow.ExecuteActivity(activityName, choice, 10*time.Second)
-	return err
+	return string(choice), err
 }

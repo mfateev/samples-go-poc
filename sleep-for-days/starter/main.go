@@ -33,7 +33,7 @@ func main() {
 	run, err := c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
 		ID:        fmt.Sprintf("sleep-for-days-poc-%d", time.Now().UnixNano()),
 		TaskQueue: "sleep-for-days-poc",
-	}, "SleepForDays", []byte(interval))
+	}, "SleepForDays", interval)
 	if err != nil {
 		log.Fatal(err)
 	}

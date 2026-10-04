@@ -2,10 +2,8 @@ module github.com/mfateev/samples-go-poc
 
 go 1.26.0
 
-require (
-	github.com/mfateev/sdk-go-poc v0.0.0-20261004191432-6b8cb54cae34
-	go.temporal.io/sdk v1.49.0
-)
+// The isolate SDK is supplied by go.work from its checked-out POC branch.
+require go.temporal.io/sdk v1.49.0
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

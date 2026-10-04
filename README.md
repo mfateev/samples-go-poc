@@ -14,9 +14,11 @@ the workflow API and Temporal adapter in
 [`mfateev/sdk-go-poc`](https://github.com/mfateev/sdk-go-poc/tree/task/modify-go-runtime-for-isolates),
 and these examples in
 [`mfateev/samples-go-poc`](https://github.com/mfateev/samples-go-poc/tree/task/modify-go-runtime-for-isolates).
-All three use the `task/modify-go-runtime-for-isolates` branch. The samples
-pin an SDK version in `go.mod` for standalone builds. The setup below uses a
-local Go workspace so the samples build against the checked-out SDK branch.
+All three use the `task/modify-go-runtime-for-isolates` branch. The checked-in
+`go.work` makes the samples use the sibling SDK checkout directly, without
+pinning an isolate SDK version or commit in `go.mod`. Keep the repositories
+beside each other as shown below. The upstream Temporal Go SDK remains pinned
+because the adapter uses its internal workflow extension API.
 
 ## 1. Prepare a Linux or macOS machine
 
@@ -106,9 +108,8 @@ GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
 export GOCACHE="$POC_ROOT/go-build-cache"
 mkdir -p "$GOCACHE"
 "$POC_ROOT/golang-go/bin/go" env GOCACHE
-cd "$POC_ROOT"
-"$POC_ROOT/golang-go/bin/go" work init ./sdk-go-poc ./samples-go-poc
 cd "$POC_ROOT/samples-go-poc"
+"$POC_ROOT/golang-go/bin/go" env GOWORK
 ```
 
 The `go version` line from the fork ends with `(isolates POC)`.
@@ -118,10 +119,29 @@ is not required for correctness. `make.bash` manages its own bootstrap cache;
 this `GOCACHE` applies to the later sample builds. It makes cleanup targeted,
 but can increase total disk use if your usual Go cache is also populated.
 
-The `go.work` file lives outside all three repositories. It makes Go use the
-SDK branch you cloned instead of the SDK version pinned in the samples'
-`go.mod`. Use `../golang-go/bin/go` for all commands in this module. A system
-`go` command would not recognize `-isolate-dir`.
+The printed workspace path should end in `samples-go-poc/go.work`. That file
+loads this module and `../sdk-go-poc`, so builds use the SDK branch you cloned.
+Go module requirements accept versions rather than branch names; this
+workspace is how these samples consume the branch's checked-out source.
+If you already created a parent workspace using the older instructions, the
+samples' own workspace takes precedence. Use `../golang-go/bin/go` for all
+commands in this module. A system `go` command would not recognize
+`-isolate-dir`.
+
+To update an existing checkout to the latest POC branch, first commit or stash
+any local edits, then run:
+
+```bash
+git -C "$POC_ROOT/golang-go" pull --ff-only origin task/modify-go-runtime-for-isolates
+git -C "$POC_ROOT/sdk-go-poc" pull --ff-only origin task/modify-go-runtime-for-isolates
+git -C "$POC_ROOT/samples-go-poc" pull --ff-only origin task/modify-go-runtime-for-isolates
+cd "$POC_ROOT/golang-go/src"
+GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
+cd "$POC_ROOT/samples-go-poc"
+```
+
+Then repeat the builds in step 3. Pulling the SDK branch updates the source
+used by the workspace; no `go get` or SDK version edit is needed.
 
 ## 3. Build the sample workers and the replayer
 
@@ -137,10 +157,20 @@ mkdir -p bin
 ../golang-go/bin/go build -isolate-dir=./helloworld/workflow -isolate-dir=./choice-exclusive/workflow -isolate-dir=./sleep-for-days/workflow -o bin/replay ./replay
 ```
 
-Each workflow directory contains a normal Go `main` and an `isolate.json`.
-The activities and workers are host-side; the workflow programs import
-`sdk-go-poc/workflow`. The SDK and Temporal Go SDK versions are pinned in the
-module files.
+Each workflow directory contains an `isolate.json`, named workflow functions,
+and a small Go `main` dispatcher. Functions register from `init` using
+`workflow.RegisterTyped` or `workflow.RegisterTyped0`, and `main` calls
+`workflow.Run`. Arguments and results use Temporal's default data converter
+inside the isolate: `HelloWorld` takes and returns a string, `ExclusiveChoice`
+takes no arguments and returns the selected fruit, and `SleepForDays` takes a
+duration string and returns `"done"`. The activities and workers are host-side;
+activity and signal operations still use byte slices. The isolate SDK comes
+from the sibling branch checkout; upstream dependencies use the module files.
+
+The isolate adapter requires the default converter. Custom converters and
+protobuf message values remain outside this POC; nil, bytes, and ordinary JSON
+values are supported. Ordinary Temporal workflow registration remains available
+through the standard worker API.
 
 ## 4. Install the Temporal CLI and run the samples
 
@@ -185,11 +215,16 @@ export GOCACHE="$HOME/temporal-isolates-poc/go-build-cache"
 ```
 
 The first starter prints `Hello Temporal!`; the second prints
-`order completed`. Each also prints its Workflow ID and Run ID. The choice
+`order completed: <fruit>`. Each also prints its Workflow ID and Run ID. The choice
 workflow schedules `GetOrder`, then one of `OrderApple`, `OrderBanana`,
 `OrderCherry`, or `OrderOrange`. `GetOrder` chooses randomly in a host activity,
 and Temporal records that result for replay. `TEMPORAL_ADDRESS` can point the
 workers and starters at another server; the default is `localhost:7233`.
+
+The typed versions of both serial samples completed on Temporal CLI 1.9.1's
+development server on Linux ARM64, and their exported histories replayed in
+fresh processes. All three sample workers and the combined replayer built with
+the SDK branch workspace.
 
 ## 5. Replay the completed histories
 
@@ -210,21 +245,24 @@ read -r CHOICE_WORKFLOW_ID
 ./bin/replay choice-exclusive-poc ExclusiveChoice bin/choice-history.json
 ```
 
-Both replays should print `replay passed`. The workers and server can then be
-stopped with Ctrl-C in their terminals.
+Both replays should print `replay passed`. Use histories from the current typed
+samples; histories recorded by the earlier byte-only workflow versions use a
+different argument/result contract. The workers and server can then be stopped
+with Ctrl-C in their terminals.
 
-The first two ports use the POC SDK's serial, byte-oriented API: upstream
-`workflow.Context` and futures become blocking calls from ordinary Go `main`
-functions. Native quiescence and deterministic concurrent goroutines remain
+The first two ports use named typed workflow functions with blocking activity
+calls. Upstream `workflow.Context` and futures become ordinary Go calls inside
+the isolate. Native quiescence and deterministic concurrent goroutines remain
 future work.
 
 ## 6. Concurrent sleep-for-days fixture
 
 The upstream `sleep-for-days` workflow starts an activity future, then selects
 between a timer future and a `complete` signal channel. The port keeps those
-operations concurrent: isolate goroutines turn the SDK's blocking activity,
-timer, and signal calls into channel-backed futures, and ordinary Go `select`
-chooses the event. Its interval defaults to 30 days; the starter accepts a
+operations concurrent: `workflow.ExecuteActivityAsync` returns a result channel,
+native `time.After` returns a host-driven durable timer channel, and
+`workflow.GetSignalChannel("complete")` wraps the signal call. Ordinary Go
+`select` chooses the event. Its interval defaults to 30 days; the starter accepts a
 shorter positive Go duration such as `1m` for experiments.
 
 The worker builds, but **this workflow is not yet supported for live execution
