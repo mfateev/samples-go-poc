@@ -1,8 +1,11 @@
 # Temporal Go samples on the isolate POC SDK
 
-This module ports two examples from [Temporal's samples-go](https://github.com/temporalio/samples-go)
+This module ports three examples from [Temporal's samples-go](https://github.com/temporalio/samples-go)
 at commit `aaf79b6`: [helloworld](https://github.com/temporalio/samples-go/tree/aaf79b6/helloworld)
 and [choice-exclusive](https://github.com/temporalio/samples-go/tree/aaf79b6/choice-exclusive).
+The [sleep-for-days](https://github.com/temporalio/samples-go/tree/aaf79b6/sleep-for-days)
+port is a concurrency fixture; its live execution and replay require the
+quiescence work described below.
 The adapted sample code uses the upstream Apache 2.0 license in `LICENSE`.
 
 **Repositories:** the modified compiler and runtime live in
@@ -120,7 +123,7 @@ SDK branch you cloned instead of the SDK version pinned in the samples'
 `go.mod`. Use `../golang-go/bin/go` for all commands in this module. A system
 `go` command would not recognize `-isolate-dir`.
 
-## 3. Build both sample workers and the replayer
+## 3. Build the sample workers and the replayer
 
 Run from `samples-go-poc` after the previous step:
 
@@ -130,7 +133,8 @@ Run from `samples-go-poc` after the previous step:
 mkdir -p bin
 ../golang-go/bin/go build -isolate-dir=./helloworld/workflow -o bin/helloworld-worker ./helloworld/worker
 ../golang-go/bin/go build -isolate-dir=./choice-exclusive/workflow -o bin/choice-worker ./choice-exclusive/worker
-../golang-go/bin/go build -isolate-dir=./helloworld/workflow -isolate-dir=./choice-exclusive/workflow -o bin/replay ./replay
+../golang-go/bin/go build -isolate-dir=./sleep-for-days/workflow -o bin/sleep-for-days-worker ./sleep-for-days/worker
+../golang-go/bin/go build -isolate-dir=./helloworld/workflow -isolate-dir=./choice-exclusive/workflow -isolate-dir=./sleep-for-days/workflow -o bin/replay ./replay
 ```
 
 Each workflow directory contains a normal Go `main` and an `isolate.json`.
@@ -209,10 +213,48 @@ read -r CHOICE_WORKFLOW_ID
 Both replays should print `replay passed`. The workers and server can then be
 stopped with Ctrl-C in their terminals.
 
-These ports use the POC SDK's serial, byte-oriented API: upstream
+The first two ports use the POC SDK's serial, byte-oriented API: upstream
 `workflow.Context` and futures become blocking calls from ordinary Go `main`
 functions. Native quiescence and deterministic concurrent goroutines remain
 future work.
+
+## 6. Concurrent sleep-for-days fixture
+
+The upstream `sleep-for-days` workflow starts an activity future, then selects
+between a timer future and a `complete` signal channel. The port keeps those
+operations concurrent: isolate goroutines turn the SDK's blocking activity,
+timer, and signal calls into channel-backed futures, and ordinary Go `select`
+chooses the event. Its interval defaults to 30 days; the starter accepts a
+shorter positive Go duration such as `1m` for experiments.
+
+The worker builds, but **this workflow is not yet supported for live execution
+or replay**. The current Temporal bridge returns from a Workflow Task when it
+sees the first blocked host call. It cannot yet observe that all isolate
+goroutines have become quiescent, so the other concurrent calls can be missed
+or processed in a later task. Deterministic scheduling and an exact quiescence
+barrier are needed before this sample is an acceptance test.
+
+After that bridge work, run the fixture from `samples-go-poc` with the server
+started as in step 4:
+
+```bash
+./bin/sleep-for-days-worker
+```
+
+In another terminal, start the workflow and send its completion signal using
+the Workflow ID printed by the starter:
+
+```bash
+cd "$HOME/temporal-isolates-poc/samples-go-poc"
+../golang-go/bin/go run ./sleep-for-days/starter 1m
+"$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow signal \
+  --workflow-id YOUR_WORKFLOW_ID --name complete
+"$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
+  --workflow-id YOUR_WORKFLOW_ID --output json > bin/sleep-for-days-history.json
+./bin/replay sleep-for-days-poc SleepForDays bin/sleep-for-days-history.json
+```
+
+The expected final result is `done` and `replay passed: SleepForDays`.
 
 If you need to reclaim disk space after all Go commands finish, clear only
 the POC build cache:
