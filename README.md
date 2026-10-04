@@ -105,6 +105,7 @@ cd "$POC_ROOT"
 cd "$POC_ROOT/samples-go-poc"
 ```
 
+The `go version` line from the fork ends with `(isolates POC)`.
 The `go.work` file lives outside all three repositories. It makes Go use the
 SDK branch you cloned instead of the SDK version pinned in the samples'
 `go.mod`. Use `../golang-go/bin/go` for all commands in this module. A system
