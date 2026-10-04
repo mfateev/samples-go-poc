@@ -12,19 +12,31 @@ the workflow API and Temporal adapter in
 and these examples in
 [`mfateev/samples-go-poc`](https://github.com/mfateev/samples-go-poc/tree/task/modify-go-runtime-for-isolates).
 All three use the `task/modify-go-runtime-for-isolates` branch. The samples
-pin the SDK module to a commit from that branch.
+pin an SDK version in `go.mod` for standalone builds. The setup below uses a
+local Go workspace so the samples build against the checked-out SDK branch.
 
-## 1. Prepare a Linux machine
+## 1. Prepare a Linux or macOS machine
 
-These commands use Bash on Debian or Ubuntu Linux, on either ARM64 or x86-64.
-The build and run sequence below was verified on Linux ARM64. Have a few
-gigabytes of free space for the Go source build and module cache. Install Git,
-curl, the archive tools, and a C compiler:
+The commands below support ARM64 and x86-64 on Debian or Ubuntu Linux and
+macOS. The build and run sequence was verified on Linux ARM64. Have a few
+gigabytes of free space for the Go source build and module cache.
+
+On Debian or Ubuntu, install Git, curl, the archive tools, and a C compiler:
 
 ```sh
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl git tar coreutils build-essential
 ```
+
+On macOS, install the Xcode Command Line Tools if they are missing:
+
+```sh
+xcode-select -p || xcode-select --install
+```
+
+Wait for the installer to finish, then verify `xcode-select -p` succeeds before
+continuing. The tools provide Git and Clang; macOS also includes curl, tar, and
+`shasum`. The following shell blocks work in Bash or the default macOS zsh.
 
 The fork is Go 1.28 development source and requires Go 1.26.0 or newer for
 bootstrapping. These commands install Go 1.26.7 into a new directory under
@@ -41,19 +53,35 @@ test ! -e "$POC_ROOT/samples-go-poc"
 
 case "$(uname -s)/$(uname -m)" in
   Linux/aarch64|Linux/arm64)
+    POC_PLATFORM=linux
     POC_ARCH=arm64
     POC_GO_SHA=5a4ec883379d51ee9ce1040d5e87f8d35e20387574dd8c947feb01eabc3c1b37
     ;;
   Linux/x86_64|Linux/amd64)
+    POC_PLATFORM=linux
     POC_ARCH=amd64
     POC_GO_SHA=ffb5f8de10c62550dfddab66b36b57030721e0a44a3218e9e1181d7b59f121ca
     ;;
-  *) echo "This guide supports Linux ARM64 or x86-64" >&2; exit 1 ;;
+  Darwin/arm64)
+    POC_PLATFORM=darwin
+    POC_ARCH=arm64
+    POC_GO_SHA=020a1e8224811be75163e920bc77e0926a1390a6aeea19bdcf23f74b9d749f6d
+    ;;
+  Darwin/x86_64)
+    POC_PLATFORM=darwin
+    POC_ARCH=amd64
+    POC_GO_SHA=92e8b34bff3c89ab16404c595669ac8cb004cc2f676dcbd1f5b87a6b8def3b47
+    ;;
+  *) echo "This guide supports Linux or macOS on ARM64 or x86-64" >&2; exit 1 ;;
 esac
 
-POC_GO_ARCHIVE="$POC_ROOT/go1.26.7.linux-$POC_ARCH.tar.gz"
-curl -fL --retry 3 -o "$POC_GO_ARCHIVE" "https://go.dev/dl/go1.26.7.linux-$POC_ARCH.tar.gz"
-printf '%s  %s\n' "$POC_GO_SHA" "$POC_GO_ARCHIVE" | sha256sum -c -
+POC_GO_ARCHIVE="$POC_ROOT/go1.26.7.$POC_PLATFORM-$POC_ARCH.tar.gz"
+curl -fL --retry 3 -o "$POC_GO_ARCHIVE" "https://go.dev/dl/go1.26.7.$POC_PLATFORM-$POC_ARCH.tar.gz"
+if [ "$POC_PLATFORM" = darwin ]; then
+  printf '%s  %s\n' "$POC_GO_SHA" "$POC_GO_ARCHIVE" | shasum -a 256 -c -
+else
+  printf '%s  %s\n' "$POC_GO_SHA" "$POC_GO_ARCHIVE" | sha256sum -c -
+fi
 tar -C "$POC_ROOT" -xzf "$POC_GO_ARCHIVE"
 "$POC_ROOT/go/bin/go" version
 ```
@@ -72,11 +100,15 @@ git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates
 cd "$POC_ROOT/golang-go/src"
 GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
 "$POC_ROOT/golang-go/bin/go" version
+cd "$POC_ROOT"
+"$POC_ROOT/golang-go/bin/go" work init ./sdk-go-poc ./samples-go-poc
 cd "$POC_ROOT/samples-go-poc"
 ```
 
-Use `../golang-go/bin/go` for all commands in this module. A system `go` command would
-not recognize `-isolate-dir`.
+The `go.work` file lives outside all three repositories. It makes Go use the
+SDK branch you cloned instead of the SDK version pinned in the samples'
+`go.mod`. Use `../golang-go/bin/go` for all commands in this module. A system
+`go` command would not recognize `-isolate-dir`.
 
 ## 3. Build both sample workers and the replayer
 
@@ -98,12 +130,12 @@ module files.
 
 ## 4. Install the Temporal CLI and run the samples
 
-Download Temporal CLI 1.9.1 from [Temporal's Linux archive](https://github.com/temporalio/cli#install-via-download).
+Download Temporal CLI 1.9.1 from [Temporal's archive](https://github.com/temporalio/cli#install-via-download).
 These commands still run in the setup terminal:
 
 ```bash
 curl -fL --retry 3 -o "$POC_ROOT/temporal-cli.tar.gz" \
-  "https://temporal.download/cli/archive/v1.9.1?platform=linux&arch=$POC_ARCH"
+  "https://temporal.download/cli/archive/v1.9.1?platform=$POC_PLATFORM&arch=$POC_ARCH"
 mkdir -p "$POC_ROOT/temporal-cli"
 tar -C "$POC_ROOT/temporal-cli" -xzf "$POC_ROOT/temporal-cli.tar.gz"
 "$POC_ROOT/temporal-cli/temporal" --version
@@ -151,8 +183,10 @@ the Workflow IDs printed by the starters when prompted:
 
 ```bash
 cd "$HOME/temporal-isolates-poc/samples-go-poc"
-read -r -p 'Hello Workflow ID: ' HELLO_WORKFLOW_ID
-read -r -p 'Choice Workflow ID: ' CHOICE_WORKFLOW_ID
+printf 'Hello Workflow ID: '
+read -r HELLO_WORKFLOW_ID
+printf 'Choice Workflow ID: '
+read -r CHOICE_WORKFLOW_ID
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
   --workflow-id "$HELLO_WORKFLOW_ID" --output json > bin/hello-history.json
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
