@@ -100,12 +100,21 @@ git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates
 cd "$POC_ROOT/golang-go/src"
 GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
 "$POC_ROOT/golang-go/bin/go" version
+export GOCACHE="$POC_ROOT/go-build-cache"
+mkdir -p "$GOCACHE"
+"$POC_ROOT/golang-go/bin/go" env GOCACHE
 cd "$POC_ROOT"
 "$POC_ROOT/golang-go/bin/go" work init ./sdk-go-poc ./samples-go-poc
 cd "$POC_ROOT/samples-go-poc"
 ```
 
 The `go version` line from the fork ends with `(isolates POC)`.
+
+Go's build cache already accounts for compiler changes, so a separate cache
+is not required for correctness. `make.bash` manages its own bootstrap cache;
+this `GOCACHE` applies to the later sample builds. It makes cleanup targeted,
+but can increase total disk use if your usual Go cache is also populated.
+
 The `go.work` file lives outside all three repositories. It makes Go use the
 SDK branch you cloned instead of the SDK version pinned in the samples'
 `go.mod`. Use `../golang-go/bin/go` for all commands in this module. A system
@@ -166,6 +175,7 @@ Once both workers report `Started Worker`, use **Terminal 4** for the starters:
 
 ```bash
 cd "$HOME/temporal-isolates-poc/samples-go-poc"
+export GOCACHE="$HOME/temporal-isolates-poc/go-build-cache"
 ../golang-go/bin/go run ./helloworld/starter Temporal
 ../golang-go/bin/go run ./choice-exclusive/starter
 ```
@@ -203,3 +213,11 @@ These ports use the POC SDK's serial, byte-oriented API: upstream
 `workflow.Context` and futures become blocking calls from ordinary Go `main`
 functions. Native quiescence and deterministic concurrent goroutines remain
 future work.
+
+If you need to reclaim disk space after all Go commands finish, clear only
+the POC build cache:
+
+```sh
+GOCACHE="$HOME/temporal-isolates-poc/go-build-cache" \
+  "$HOME/temporal-isolates-poc/golang-go/bin/go" clean -cache
+```
