@@ -28,7 +28,7 @@ func main() {
 }
 
 func run(handle isolate.Handle, selected string, getErr, orderErr error, wantErr string) {
-	i, err := isolate.New(isolate.Config{Program: handle.Program(func() { _ = workflow.RunFunction(handle) })})
+	i, err := isolate.New(isolate.Config{Deterministic: true, Program: handle.Program(func() { _ = workflow.RunFunction(handle) })})
 	check(err)
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

@@ -8,8 +8,8 @@ import (
 )
 
 // Test the actual marked function with a host that explicitly services every
-// concurrent Call. This verifies the sample independently of the unfinished
-// Temporal bridge quiescence barrier.
+// concurrent Call with deterministic dispatch. Repeated 30-day timer firings
+// are checked without waiting for wall-clock time on a real server.
 func TestSleepForDaysBehavior(t *testing.T) {
 	binary := filepath.Join(t.TempDir(), "sleep-for-days-driver")
 	goTool := filepath.Join(runtime.GOROOT(), "bin", "go")

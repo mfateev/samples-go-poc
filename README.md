@@ -4,8 +4,10 @@ This module ports three examples from [Temporal's samples-go](https://github.com
 at commit `aaf79b6`: [helloworld](https://github.com/temporalio/samples-go/tree/aaf79b6/helloworld)
 and [choice-exclusive](https://github.com/temporalio/samples-go/tree/aaf79b6/choice-exclusive).
 The [sleep-for-days](https://github.com/temporalio/samples-go/tree/aaf79b6/sleep-for-days)
-port is a concurrency fixture; its live execution and replay require the
-quiescence work described below.
+port exercises concurrent activities, native timers, and signals with
+deterministic isolate dispatch.
+The [goroutines](./goroutines/workflow.go) example adds native Go activity
+fan-out with channels and WaitGroup.
 The adapted sample code uses the upstream Apache 2.0 license in `LICENSE`.
 
 **Repositories:** the modified compiler and runtime live in
@@ -154,6 +156,8 @@ mkdir -p bin
 ../golang-go/bin/go build -o bin/helloworld-worker ./helloworld/worker
 ../golang-go/bin/go build -o bin/choice-worker ./choice-exclusive/worker
 ../golang-go/bin/go build -o bin/sleep-for-days-worker ./sleep-for-days/worker
+../golang-go/bin/go build -o bin/goroutines-worker ./goroutines/worker
+../golang-go/bin/go build -o bin/goroutines-starter ./goroutines/starter
 ../golang-go/bin/go build -o bin/replay ./replay
 ```
 
@@ -284,8 +288,8 @@ with Ctrl-C in their terminals.
 
 The first two ports use named typed workflow functions with blocking activity
 calls. Upstream `workflow.Context` and futures become ordinary Go calls inside
-the isolate. Native quiescence and deterministic concurrent goroutines remain
-future work.
+the isolate. The adapter enables deterministic FIFO goroutines, reproducible
+select, canonical string/integer maps, and an exact suspension fence.
 
 ## 6. Concurrent sleep-for-days fixture
 
@@ -298,20 +302,18 @@ ignored. Ordinary Go `select` waits only on native `time.After(30 * 24 * time.Ho
 and `workflow.GetSignalChannel("complete")`. The email message remains
 `"Sleeping for 30 days"`; the starter passes no arguments.
 
-The worker builds, but **this workflow is not yet supported for live execution
-or replay**. The current Temporal bridge returns from a Workflow Task when it
-sees the first blocked host call. It cannot yet observe that all isolate
-goroutines have become quiescent, so the other concurrent calls can be missed
-or processed in a later task. Deterministic scheduling and an exact quiescence
-barrier are needed before this sample is an acceptance test.
+The worker schedules every concurrent command before ending a Workflow Task.
+This sample completed after a signal against Temporal CLI 1.9.1 on Linux ARM64;
+its exported history replayed in fresh processes at GOMAXPROCS 1, 2, and 8.
+The SDK's concurrent fixture separately checks firing a native one-second
+timer alongside two activities. Native cross-architecture replay remains a
+release gate.
 
-`go test ./sleep-for-days` uses a direct isolate host to check the no-argument
-entry, repeated 30-day timers, completion signals, and independence from pending
-or failed email activities. This checks the sample logic without claiming that
-the Temporal task adapter supports concurrent execution yet.
+`go test ./sleep-for-days` enables deterministic dispatch with a direct isolate
+host to check the no-argument entry, repeated 30-day timers, completion signals,
+and independence from pending or failed email activities.
 
-After that bridge work, run the fixture from `samples-go-poc` with the server
-started as in step 4:
+Run the fixture from `samples-go-poc` with the server started as in step 4:
 
 ```bash
 ./bin/sleep-for-days-worker
@@ -331,6 +333,45 @@ cd "$HOME/temporal-isolates-poc/samples-go-poc"
 ```
 
 The expected final result is `done` and `replay passed: SleepForDays`.
+
+## 7. Native goroutines and activity fan-out
+
+`GreetAll(names []string) ([]string, error)` uses an explicit `go` statement for
+each name. Every goroutine calls a blocking activity API and sends its result
+through an ordinary unbuffered Go channel. A separate goroutine waits on
+`sync.WaitGroup` and closes that channel. The workflow returns greetings in
+input order regardless of activity completion order, or propagates an activity
+error. It uses the same marked-function and worker registration APIs as the
+other samples.
+
+With the server from step 4 running, start the worker in one terminal:
+
+```bash
+cd "$HOME/temporal-isolates-poc/samples-go-poc"
+./bin/goroutines-worker
+```
+
+Start it from another terminal:
+
+```bash
+cd "$HOME/temporal-isolates-poc/samples-go-poc"
+./bin/goroutines-starter Ada Grace Linus
+```
+
+It prints the Workflow ID followed by `Hello Ada!`, `Hello Grace!`, and
+`Hello Linus!`. Export that ID and replay in a fresh process:
+
+```bash
+"$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
+  --workflow-id YOUR_WORKFLOW_ID --output json > bin/goroutines-history.json
+./bin/replay GreetAll bin/goroutines-history.json
+```
+
+`../golang-go/bin/go test ./goroutines` checks empty input, concurrent activity
+scheduling, completions delivered in reverse order, and activity errors with
+GOMAXPROCS 1, 2, and 8. Live execution and fresh-process replay at those three
+settings passed on Linux ARM64; the replayer also compares the greeting result
+with the recorded history.
 
 If you need to reclaim disk space after all Go commands finish, clear only
 the POC build cache:
