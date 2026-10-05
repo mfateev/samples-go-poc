@@ -9,6 +9,6 @@ import (
 
 //go:isolate
 func HelloWorld(name string) (string, error) {
-	greeting, err := workflow.ExecuteActivity("HelloWorldActivity", []byte(name), 10*time.Second)
-	return string(greeting), err
+	greeting, err := workflow.ExecuteActivity[string]("HelloWorldActivity", 10*time.Second, name)
+	return greeting, err
 }

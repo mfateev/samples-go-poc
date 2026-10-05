@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 
@@ -27,21 +26,11 @@ func main() {
 		choice.OrderChoiceApple, choice.OrderChoiceBanana,
 		choice.OrderChoiceCherry, choice.OrderChoiceOrange,
 	}}
-	// The POC activity boundary carries bytes. Keep the sample's native
-	// activity signatures and adapt them only when registering with the host.
-	w.RegisterActivityWithOptions(func(_ context.Context, _ []byte) ([]byte, error) {
-		selected, err := orders.GetOrder()
-		return []byte(selected), err
-	}, activity.RegisterOptions{Name: "GetOrder"})
-	registerOrder := func(name string, order func(string) error) {
-		w.RegisterActivityWithOptions(func(_ context.Context, input []byte) ([]byte, error) {
-			return nil, order(string(input))
-		}, activity.RegisterOptions{Name: name})
-	}
-	registerOrder("OrderApple", orders.OrderApple)
-	registerOrder("OrderBanana", orders.OrderBanana)
-	registerOrder("OrderCherry", orders.OrderCherry)
-	registerOrder("OrderOrange", orders.OrderOrange)
+	w.RegisterActivityWithOptions(orders.GetOrder, activity.RegisterOptions{Name: "GetOrder"})
+	w.RegisterActivityWithOptions(orders.OrderApple, activity.RegisterOptions{Name: "OrderApple"})
+	w.RegisterActivityWithOptions(orders.OrderBanana, activity.RegisterOptions{Name: "OrderBanana"})
+	w.RegisterActivityWithOptions(orders.OrderCherry, activity.RegisterOptions{Name: "OrderCherry"})
+	w.RegisterActivityWithOptions(orders.OrderOrange, activity.RegisterOptions{Name: "OrderOrange"})
 	if err := w.Run(worker.InterruptCh()); err != nil {
 		log.Fatal(err)
 	}

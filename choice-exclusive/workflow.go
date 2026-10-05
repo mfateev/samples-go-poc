@@ -17,12 +17,12 @@ const (
 
 //go:isolate
 func ExclusiveChoice() error {
-	choice, err := workflow.ExecuteActivity("GetOrder", nil, 10*time.Second)
+	choice, err := workflow.ExecuteActivity[string]("GetOrder", 10*time.Second)
 	if err != nil {
 		return err
 	}
 	var activityName string
-	switch string(choice) {
+	switch choice {
 	case OrderChoiceApple:
 		activityName = "OrderApple"
 	case OrderChoiceBanana:
@@ -32,8 +32,8 @@ func ExclusiveChoice() error {
 	case OrderChoiceOrange:
 		activityName = "OrderOrange"
 	default:
-		return fmt.Errorf("unknown order choice: %v", string(choice))
+		return fmt.Errorf("unknown order choice: %v", choice)
 	}
-	_, err = workflow.ExecuteActivity(activityName, choice, 10*time.Second)
+	_, err = workflow.ExecuteActivity[struct{}](activityName, 10*time.Second, choice)
 	return err
 }

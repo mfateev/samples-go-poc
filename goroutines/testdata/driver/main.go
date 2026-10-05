@@ -62,10 +62,17 @@ func run(handle isolate.Handle, names []string, failed bool) {
 	next(workflow.OpStartPayloads).Reply(marshal(workflow.PayloadStart{Name: handle.Name(), Payloads: inputBytes}), nil)
 	var requests []*isolate.Command
 	for _, name := range names {
-		command := next(workflow.OpActivity)
-		var request workflow.ActivityRequest
+		command := next(workflow.OpActivityPayloads)
+		var request workflow.ActivityPayloadRequest
 		check(json.Unmarshal(command.Payload, &request))
-		if request.Name != "Greet" || string(request.Input) != name || request.StartToCloseTimeout != 10*time.Second {
+		var args commonpb.Payloads
+		check(proto.Unmarshal(request.Payloads, &args))
+		var input string
+		check(converter.GetDefaultDataConverter().FromPayloads(&args, &input))
+		if len(args.Payloads) != 1 {
+			panic("wrong greeting argument count")
+		}
+		if request.Name != "Greet" || input != name || request.StartToCloseTimeout != 10*time.Second {
 			panic(fmt.Sprintf("unexpected activity %+v", request))
 		}
 		requests = append(requests, command)
@@ -77,7 +84,11 @@ func run(handle isolate.Handle, names []string, failed bool) {
 			if failed && index == 1 {
 				cause = errors.New("greeting failed")
 			}
-			requests[index].Reply([]byte("Hello "+names[index]+"!"), cause)
+			result, err := converter.GetDefaultDataConverter().ToPayloads("Hello " + names[index] + "!")
+			check(err)
+			encoded, err := proto.Marshal(result)
+			check(err)
+			requests[index].Reply(encoded, cause)
 		}
 		check(i.Resume())
 	}

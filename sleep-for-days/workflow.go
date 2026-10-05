@@ -15,7 +15,7 @@ func SleepForDays() (string, error) {
 	for {
 		// The upstream sample schedules the email without awaiting its future.
 		// Completion or failure of the email does not control this workflow.
-		_ = workflow.ExecuteActivityAsync("SendEmail", []byte("Sleeping for 30 days"), 10*time.Second)
+		_ = workflow.ExecuteActivityAsync[struct{}]("SendEmail", 10*time.Second, "Sleeping for 30 days")
 		select {
 		case received, ok := <-signals:
 			if !ok {

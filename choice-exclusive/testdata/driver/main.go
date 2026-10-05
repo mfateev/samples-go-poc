@@ -11,6 +11,9 @@ import (
 
 	choice "github.com/mfateev/samples-go-poc/choice-exclusive"
 	"github.com/mfateev/sdk-go-poc/workflow"
+	commonpb "go.temporal.io/api/common/v1"
+	"go.temporal.io/sdk/converter"
+	"google.golang.org/protobuf/proto"
 )
 
 func main() {
@@ -50,11 +53,11 @@ func run(handle isolate.Handle, selected string, getErr, orderErr error, wantErr
 	}
 	start := next(workflow.OpStartPayloads)
 	start.Reply(marshal(workflow.PayloadStart{Name: handle.Name()}), nil)
-	activity := next(workflow.OpActivity)
+	activity := next(workflow.OpActivityPayloads)
 	validateActivity(activity, "GetOrder", "")
-	activity.Reply([]byte(selected), getErr)
+	activity.Reply(encodeResult(selected), getErr)
 	if getErr == nil && selected != "pear" {
-		activity = next(workflow.OpActivity)
+		activity = next(workflow.OpActivityPayloads)
 		name := map[string]string{"apple": "OrderApple", "banana": "OrderBanana", "cherry": "OrderCherry", "orange": "OrderOrange"}[selected]
 		validateActivity(activity, name, selected)
 		activity.Reply(nil, orderErr)
@@ -70,11 +73,25 @@ func run(handle isolate.Handle, selected string, getErr, orderErr error, wantErr
 }
 
 func validateActivity(command *isolate.Command, name, input string) {
-	var request workflow.ActivityRequest
+	var request workflow.ActivityPayloadRequest
 	check(json.Unmarshal(command.Payload, &request))
-	if request.Name != name || string(request.Input) != input || request.StartToCloseTimeout != 10*time.Second {
+	var payloads commonpb.Payloads
+	check(proto.Unmarshal(request.Payloads, &payloads))
+	wantCount := 1
+	if name == "GetOrder" {
+		wantCount = 0
+	}
+	if len(payloads.Payloads) != wantCount {
+		panic("wrong activity argument count")
+	}
+	var decoded string
+	if wantCount != 0 {
+		check(converter.GetDefaultDataConverter().FromPayloads(&payloads, &decoded))
+	}
+	if request.Name != name || decoded != input || request.StartToCloseTimeout != 10*time.Second {
 		panic(fmt.Sprintf("activity = %+v, expected %s(%q)", request, name, input))
 	}
+
 }
 
 func check(err error) {
@@ -85,6 +102,14 @@ func check(err error) {
 
 func marshal(value any) []byte {
 	data, err := json.Marshal(value)
+	check(err)
+	return data
+}
+
+func encodeResult(value any) []byte {
+	payloads, err := converter.GetDefaultDataConverter().ToPayloads(value)
+	check(err)
+	data, err := proto.Marshal(payloads)
 	check(err)
 	return data
 }

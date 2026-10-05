@@ -60,10 +60,17 @@ func main() {
 		for !email || timer == nil || signal == nil {
 			command := next()
 			switch command.Op {
-			case workflow.OpActivity:
-				var request workflow.ActivityRequest
+			case workflow.OpActivityPayloads:
+				var request workflow.ActivityPayloadRequest
 				check(json.Unmarshal(command.Payload, &request))
-				if email || request.Name != "SendEmail" || string(request.Input) != "Sleeping for 30 days" || request.StartToCloseTimeout != 10*time.Second {
+				var args commonpb.Payloads
+				check(proto.Unmarshal(request.Payloads, &args))
+				var message string
+				check(converter.GetDefaultDataConverter().FromPayloads(&args, &message))
+				if len(args.Payloads) != 1 {
+					panic("wrong email argument count")
+				}
+				if email || request.Name != "SendEmail" || message != "Sleeping for 30 days" || request.StartToCloseTimeout != 10*time.Second {
 					panic("unexpected email request")
 				}
 				email = true

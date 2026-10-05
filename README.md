@@ -169,7 +169,8 @@ or special build flags are needed. Arguments and results use Temporal's default 
 inside the isolate: `HelloWorld` takes and returns a string, `ExclusiveChoice`
 takes no arguments and returns only an error, and `SleepForDays` takes no
 arguments and returns `"done"`. The activities and workers are host-side;
-activity and signal operations still use byte slices. The isolate SDK comes
+activity arguments/results use the default converter inside the isolate;
+signal operations still use byte slices. The isolate SDK comes
 from the sibling branch checkout; upstream dependencies use the module files.
 
 The isolate adapter requires the default converter. Custom converters and
@@ -183,8 +184,8 @@ For example, the hello world worker registers `helloworld.HelloWorld`, declared 
 ```go
 //go:isolate
 func HelloWorld(name string) (string, error) {
-    greeting, err := workflow.ExecuteActivity("HelloWorldActivity", []byte(name), 10*time.Second)
-    return string(greeting), err
+    greeting, err := workflow.ExecuteActivity[string]("HelloWorldActivity", 10*time.Second, name)
+    return greeting, err
 }
 ```
 
@@ -248,8 +249,10 @@ workflow schedules `GetOrder`, then one of `OrderApple`, `OrderBanana`,
 `OrderCherry`, or `OrderOrange`. `GetOrder` chooses randomly in a host activity,
 and Temporal records that result for replay. The workflow itself returns no
 result, matching [upstream](https://github.com/temporalio/samples-go/blob/main/choice-exclusive/workflow.go).
-The worker configures an `OrderActivities` instance and wraps its native string
-arguments/results at the POC byte-slice activity boundary. Both activity failures
+The worker configures an `OrderActivities` instance and registers its native
+methods directly. Generic `ExecuteActivity[string]` decodes GetOrder
+results inside the isolate; `ExecuteActivity[struct{}]` waits for the error-only
+order activities. Both activity failures
 and unknown choices fail the workflow. `go test ./choice-exclusive` exercises all
 four branches, both activity failure paths, unknown choices, and configured
 activity choices. `TEMPORAL_ADDRESS` can point the
@@ -283,7 +286,9 @@ Both replays should print `replay passed`. Use histories from the current typed
 samples; histories recorded by the earlier byte-only workflow versions use a
 different argument/result contract. The earlier Choice port also returned the
 fruit; that result was removed to match upstream. Record fresh Choice histories
-after this change. The workers and server can then be stopped
+after this change. The typed activity API also changes activity payloads from
+byte encodings to native JSON strings and removes GetOrder's dummy argument;
+record fresh histories after updating these samples. The workers and server can then be stopped
 with Ctrl-C in their terminals.
 
 The first two ports use named typed workflow functions with blocking activity
