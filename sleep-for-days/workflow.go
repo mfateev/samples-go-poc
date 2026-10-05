@@ -1,6 +1,6 @@
 // The upstream sleep-for-days workflow, adapted to use native Go channels and
 // select inside an isolate.
-package main
+package sleepfordays
 
 import (
 	"errors"
@@ -11,14 +11,7 @@ import (
 
 const defaultInterval = 30 * 24 * time.Hour
 
-func init() {
-	workflow.RegisterTyped("SleepForDays", SleepForDays)
-}
-
-func main() {
-	_ = workflow.Run()
-}
-
+//go:isolate
 func SleepForDays(input string) (string, error) {
 	interval := defaultInterval
 	if input != "" {

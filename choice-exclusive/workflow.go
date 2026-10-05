@@ -1,5 +1,5 @@
 // The upstream exclusive-choice workflow, adapted to run in an isolate.
-package main
+package choiceexclusive
 
 import (
 	"errors"
@@ -8,14 +8,7 @@ import (
 	"github.com/mfateev/sdk-go-poc/workflow"
 )
 
-func init() {
-	workflow.RegisterTyped0("ExclusiveChoice", ExclusiveChoice)
-}
-
-func main() {
-	_ = workflow.Run()
-}
-
+//go:isolate
 func ExclusiveChoice() (string, error) {
 	choice, err := workflow.ExecuteActivity("GetOrder", nil, 10*time.Second)
 	if err != nil {

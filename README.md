@@ -125,8 +125,8 @@ Go module requirements accept versions rather than branch names; this
 workspace is how these samples consume the branch's checked-out source.
 If you already created a parent workspace using the older instructions, the
 samples' own workspace takes precedence. Use `../golang-go/bin/go` for all
-commands in this module. A system `go` command would not recognize
-`-isolate-dir`.
+commands in this module. A system Go toolchain lacks the isolate runtime API
+and marker handling.
 
 To update an existing checkout to the latest POC branch, first commit or stash
 any local edits, then run:
@@ -151,16 +151,17 @@ Run from `samples-go-poc` after the previous step:
 ../golang-go/bin/go mod download
 ../golang-go/bin/go test ./...
 mkdir -p bin
-../golang-go/bin/go build -isolate-dir=./helloworld/workflow -o bin/helloworld-worker ./helloworld/worker
-../golang-go/bin/go build -isolate-dir=./choice-exclusive/workflow -o bin/choice-worker ./choice-exclusive/worker
-../golang-go/bin/go build -isolate-dir=./sleep-for-days/workflow -o bin/sleep-for-days-worker ./sleep-for-days/worker
-../golang-go/bin/go build -isolate-dir=./helloworld/workflow -isolate-dir=./choice-exclusive/workflow -isolate-dir=./sleep-for-days/workflow -o bin/replay ./replay
+../golang-go/bin/go build -o bin/helloworld-worker ./helloworld/worker
+../golang-go/bin/go build -o bin/choice-worker ./choice-exclusive/worker
+../golang-go/bin/go build -o bin/sleep-for-days-worker ./sleep-for-days/worker
+../golang-go/bin/go build -o bin/replay ./replay
 ```
 
-Each workflow directory contains an `isolate.json`, named workflow functions,
-and a small Go `main` dispatcher. Functions register from `init` using
-`workflow.RegisterTyped` or `workflow.RegisterTyped0`, and `main` calls
-`workflow.Run`. Arguments and results use Temporal's default data converter
+Workflow functions carry a `//go:isolate` directive. Workers import them and use
+the POC SDK's `worker.New` and normal `RegisterWorkflow(fn)` API. The build
+discovers marked functions through the host's imports and generates typed
+invokers and per-instance state factories. No isolate config, workflow `main`,
+or special build flags are needed. Arguments and results use Temporal's default data converter
 inside the isolate: `HelloWorld` takes and returns a string, `ExclusiveChoice`
 takes no arguments and returns the selected fruit, and `SleepForDays` takes a
 duration string and returns `"done"`. The activities and workers are host-side;
@@ -169,8 +170,31 @@ from the sibling branch checkout; upstream dependencies use the module files.
 
 The isolate adapter requires the default converter. Custom converters and
 protobuf message values remain outside this POC; nil, bytes, and ordinary JSON
-values are supported. Ordinary Temporal workflow registration remains available
-through the standard worker API.
+values are supported. Unmarked ordinary Temporal workflows retain their usual
+`workflow.Context` signature and are forwarded through the same worker API.
+
+For example, the hello world worker registers `helloworld.HelloWorld`, declared in
+`helloworld/workflow.go`:
+
+```go
+//go:isolate
+func HelloWorld(name string) (string, error) {
+    greeting, err := workflow.ExecuteActivity("HelloWorldActivity", []byte(name), 10*time.Second)
+    return string(greeting), err
+}
+```
+
+Functions keep their Go signatures. The marker supports concrete top-level
+functions with ordinary Go arguments and either no returns, `error`, or
+`(result, error)`. Variadic and generic functions, methods, cgo source, and
+`workflow.Context` arguments are rejected. Build executable workers with
+`go build`; automatic entry generation for `go run`, `go install`, and test
+binaries remains future work. Each sample keeps its workflow and activities in
+the same root package; worker and starter executables remain in subdirectories.
+The POC selects package state conservatively and replays selected initializers
+for each instance; workflow-reachable initialization must be suitable for that.
+The pinned host activity SDK graph initializes once in the process. Call its
+services only from host activities; workflow code uses the POC workflow API.
 
 ## 4. Install the Temporal CLI and run the samples
 
@@ -241,8 +265,8 @@ read -r CHOICE_WORKFLOW_ID
   --workflow-id "$HELLO_WORKFLOW_ID" --output json > bin/hello-history.json
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
   --workflow-id "$CHOICE_WORKFLOW_ID" --output json > bin/choice-history.json
-./bin/replay helloworld-poc HelloWorld bin/hello-history.json
-./bin/replay choice-exclusive-poc ExclusiveChoice bin/choice-history.json
+./bin/replay HelloWorld bin/hello-history.json
+./bin/replay ExclusiveChoice bin/choice-history.json
 ```
 
 Both replays should print `replay passed`. Use histories from the current typed
@@ -289,7 +313,7 @@ cd "$HOME/temporal-isolates-poc/samples-go-poc"
   --workflow-id YOUR_WORKFLOW_ID --name complete
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
   --workflow-id YOUR_WORKFLOW_ID --output json > bin/sleep-for-days-history.json
-./bin/replay sleep-for-days-poc SleepForDays bin/sleep-for-days-history.json
+./bin/replay SleepForDays bin/sleep-for-days-history.json
 ```
 
 The expected final result is `done` and `replay passed: SleepForDays`.

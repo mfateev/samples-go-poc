@@ -1,22 +1,16 @@
 package main
 
 import (
-	"isolate"
 	"log"
 	"os"
 
 	"github.com/mfateev/samples-go-poc/helloworld"
-	"github.com/mfateev/sdk-go-poc/temporalbridge"
+	"github.com/mfateev/sdk-go-poc/worker"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/worker"
 )
 
 func main() {
-	program, ok := isolate.LookupProgram("helloworld-poc")
-	if !ok {
-		log.Fatal("missing helloworld-poc; build with -isolate-dir=./helloworld/workflow")
-	}
 	address := os.Getenv("TEMPORAL_ADDRESS")
 	if address == "" {
 		address = client.DefaultHostPort
@@ -27,7 +21,7 @@ func main() {
 	}
 	defer c.Close()
 	w := worker.New(c, "hello-world-poc", worker.Options{})
-	temporalbridge.Register(w, "HelloWorld", program)
+	w.RegisterWorkflow(helloworld.HelloWorld)
 	w.RegisterActivityWithOptions(helloworld.Activity, activity.RegisterOptions{Name: "HelloWorldActivity"})
 	if err := w.Run(worker.InterruptCh()); err != nil {
 		log.Fatal(err)

@@ -3,29 +3,34 @@ package main
 
 import (
 	"fmt"
-	"isolate"
 	"os"
 
-	"github.com/mfateev/sdk-go-poc/temporalbridge"
-	"go.temporal.io/sdk/worker"
-	goWorkflow "go.temporal.io/sdk/workflow"
+	choice "github.com/mfateev/samples-go-poc/choice-exclusive"
+	hello "github.com/mfateev/samples-go-poc/helloworld"
+	sleep "github.com/mfateev/samples-go-poc/sleep-for-days"
+	"github.com/mfateev/sdk-go-poc/worker"
 )
 
 func main() {
-	if len(os.Args) != 4 {
-		fmt.Fprintln(os.Stderr, "usage: replay <program-name> <workflow-type> <history.json>")
+	if len(os.Args) != 3 {
+		fmt.Fprintln(os.Stderr, "usage: replay <workflow-type> <history.json>")
 		os.Exit(2)
 	}
-	program, ok := isolate.LookupProgram(os.Args[1])
+	functions := map[string]any{
+		"HelloWorld":      hello.HelloWorld,
+		"ExclusiveChoice": choice.ExclusiveChoice,
+		"SleepForDays":    sleep.SleepForDays,
+	}
+	fn, ok := functions[os.Args[1]]
 	if !ok {
-		fmt.Fprintln(os.Stderr, "unknown isolate program:", os.Args[1])
+		fmt.Fprintln(os.Stderr, "unknown workflow type:", os.Args[1])
 		os.Exit(2)
 	}
 	replayer := worker.NewWorkflowReplayer()
-	replayer.RegisterWorkflowWithOptions(temporalbridge.Factory{Program: program, EntryName: os.Args[2]}, goWorkflow.RegisterOptions{Name: os.Args[2]})
-	if err := replayer.ReplayWorkflowHistoryFromJSONFile(nil, os.Args[3]); err != nil {
+	replayer.RegisterWorkflow(fn)
+	if err := replayer.ReplayWorkflowHistoryFromJSONFile(nil, os.Args[2]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	fmt.Println("replay passed:", os.Args[2])
+	fmt.Println("replay passed:", os.Args[1])
 }
