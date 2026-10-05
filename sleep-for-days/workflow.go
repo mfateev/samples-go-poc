@@ -3,6 +3,7 @@
 package sleepfordays
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -10,13 +11,15 @@ import (
 )
 
 //go:isolate
-func SleepForDays() (string, error) {
-	signals := workflow.GetSignalChannel("complete")
+func SleepForDays(ctx context.Context) (string, error) {
+	signals := workflow.GetSignalChannel(ctx, "complete")
 	for {
 		// The upstream sample schedules the email without awaiting its future.
 		// Completion or failure of the email does not control this workflow.
-		_ = workflow.ExecuteActivityAsyncByName[struct{}]("SendEmail", 10*time.Second, "Sleeping for 30 days")
+		_ = workflow.ExecuteActivityAsyncByName[struct{}](ctx, "SendEmail", 10*time.Second, "Sleeping for 30 days")
 		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
 		case received, ok := <-signals:
 			if !ok {
 				return "", errors.New("complete signal channel closed")

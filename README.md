@@ -183,8 +183,8 @@ For example, the hello world worker registers `helloworld.HelloWorld`, declared 
 
 ```go
 //go:isolate
-func HelloWorld(name string) (string, error) {
-    greeting, err := workflow.ExecuteActivityWithContext(Activity, 10*time.Second, name)
+func HelloWorld(ctx context.Context, name string) (string, error) {
+    greeting, err := workflow.ExecuteActivity(ctx, Activity, 10*time.Second, name)
     return greeting, err
 }
 ```
@@ -250,8 +250,8 @@ workflow schedules `GetOrder`, then one of `OrderApple`, `OrderBanana`,
 and Temporal records that result for replay. The workflow itself returns no
 result, matching [upstream](https://github.com/temporalio/samples-go/blob/main/choice-exclusive/workflow.go).
 The worker configures an `OrderActivities` instance and registers its native
-methods directly. Generic `ExecuteActivityByName[string]` decodes GetOrder
-results inside the isolate; `ExecuteActivityByName[struct{}]` waits for the error-only
+methods directly. `ExecuteActivityNoInput` infers GetOrder results from its method signature;
+`ExecuteActivityError` waits for the error-only
 order activities. Both activity failures
 and unknown choices fail the workflow. `go test ./choice-exclusive` exercises all
 four branches, both activity failure paths, unknown choices, and configured
@@ -304,7 +304,7 @@ takes no workflow arguments. It schedules an email immediately and after each
 email activity's future or inspect its result. The port preserves that behavior:
 `workflow.ExecuteActivityAsyncByName[struct{}]` schedules the email and its result channel is
 ignored. Ordinary Go `select` waits only on native `time.After(30 * 24 * time.Hour)`
-and `workflow.GetSignalChannel("complete")`. The email message remains
+and `workflow.GetSignalChannel(ctx, "complete")`. The email message remains
 `"Sleeping for 30 days"`; the starter passes no arguments.
 
 The worker schedules every concurrent command before ending a Workflow Task.
@@ -389,15 +389,27 @@ GOCACHE="$HOME/temporal-isolates-poc/go-build-cache" \
 ### Activity type inference
 
 The helloworld and goroutines samples pass host activity functions directly to
-`workflow.ExecuteActivityWithContext(Activity, timeout, input)` and
-`workflow.ExecuteActivityWithContext(Greet, timeout, name)`. Go infers the input
+`workflow.ExecuteActivity(ctx, Activity, timeout, input)` and
+`workflow.ExecuteActivity(ctx, Greet, timeout, name)`. Go infers the input
 and result types; no explicit `[string]` or cast is needed. The worker supplies
-the activity context. Activities with signature `func(Input) (Output, error)`
-use `workflow.ExecuteActivity` instead. Both forms have async channel variants.
+the activity context. Every activity must have a leading standard `context.Context` parameter.
+Every isolate workflow also receives a standard context from the SDK. Both forms have async channel variants.
 The function identifies host work and never runs inside the workflow isolate.
 
 Helloworld preserves its `HelloWorldActivity` registration alias. The replay
 program registers that same activity alias as metadata before replaying.
-Choice-exclusive (zero inputs/error-only results) and sleep-for-days (error-only
-email) use `ExecuteActivityByName` and `ExecuteActivityAsyncByName`. These forms
-retain explicit result types and support arbitrary argument counts.
+Choice-exclusive uses method references throughout: `ExecuteActivityNoInput`
+for GetOrder and `ExecuteActivityError` for the selected order method. The
+receiver is supplied by the registered host object. Sleep-for-days uses the
+name-based async API for its error-only email activity.
+
+
+### Workflow cancellation
+
+All sample workflows take `context.Context` first and pass it to their activity
+calls. The SDK cancels that context when Temporal requests workflow cancellation.
+The sleep-for-days sample selects on `ctx.Done()` alongside its signal and timer.
+Child contexts and `context.WithTimeout` work with deterministic history time;
+activities use their own host context and should heartbeat for prompt cancellation.
+The context parameter is injected by the SDK and is never included in CLI inputs
+or serialized payloads. Existing non-canceled sample histories remain compatible.

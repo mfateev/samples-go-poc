@@ -45,14 +45,27 @@ func run(handle isolate.Handle, names []string, failed bool) {
 	check(i.Start())
 	deadline := time.After(5 * time.Second)
 	next := func(op uint32) *isolate.Command {
-		select {
-		case command := <-i.Commands():
-			if command == nil || command.Op != op {
-				panic(fmt.Sprintf("expected %d, got %+v", op, command))
+		for {
+			select {
+			case command := <-i.Commands():
+				if command != nil && command.Op == workflow.OpWorkflowCancel {
+					continue
+				}
+				if command != nil && command.Op == workflow.OpCancellableCall {
+					var request workflow.CallRequest
+					if err := json.Unmarshal(command.Payload, &request); err != nil {
+						panic(err)
+					}
+					command.Op, command.Payload = request.Op, request.Payload
+				}
+				if command == nil || command.Op != op {
+					panic(fmt.Sprintf("expected %d, got %+v", op, command))
+				}
+				return command
+			case <-deadline:
+				panic("workflow did not progress")
 			}
-			return command
-		case <-deadline:
-			panic("workflow did not progress")
+
 		}
 	}
 	input, err := converter.GetDefaultDataConverter().ToPayloads(names)

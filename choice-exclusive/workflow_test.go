@@ -1,6 +1,7 @@
 package choiceexclusive
 
 import (
+	"context"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -20,7 +21,7 @@ func TestExclusiveChoiceBehavior(t *testing.T) {
 
 func TestConfiguredOrderActivities(t *testing.T) {
 	orders := &OrderActivities{OrderChoices: []string{OrderChoiceCherry}}
-	selected, err := orders.GetOrder()
+	selected, err := orders.GetOrder(context.Background())
 	if err != nil || selected != OrderChoiceCherry {
 		t.Fatalf("configured order = %q, %v", selected, err)
 	}

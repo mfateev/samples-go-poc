@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"isolate"
 	"os"
+	"reflect"
 	"time"
 
 	sleepfordays "github.com/mfateev/samples-go-poc/sleep-for-days"
@@ -19,8 +20,8 @@ import (
 
 func main() {
 	handle, ok := isolate.LookupFunction(sleepfordays.SleepForDays)
-	if !ok || handle.Signature().NumIn() != 0 {
-		panic("expected a marked workflow with no arguments")
+	if !ok || handle.Signature().NumIn() != 1 || handle.Signature().In(0) != reflect.TypeFor[context.Context]() {
+		panic("expected a marked context-only workflow")
 	}
 	clock := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
 	i, err := isolate.New(isolate.Config{
@@ -38,14 +39,25 @@ func main() {
 	check(i.Start())
 	deadline := time.After(10 * time.Second)
 	next := func() *isolate.Command {
-		select {
-		case command, ok := <-i.Commands():
-			if !ok {
-				panic("isolate stopped before completion")
+		for {
+			select {
+			case command, ok := <-i.Commands():
+				if ok && command.Op == workflow.OpWorkflowCancel {
+					continue
+				}
+				if ok && command.Op == workflow.OpCancellableCall {
+					var request workflow.CallRequest
+					check(json.Unmarshal(command.Payload, &request))
+					command.Op, command.Payload = request.Op, request.Payload
+				}
+				if !ok {
+					panic("isolate stopped before completion")
+				}
+				return command
+			case <-deadline:
+				panic("workflow did not make progress")
 			}
-			return command
-		case <-deadline:
-			panic("workflow did not make progress")
+
 		}
 	}
 	start := next()

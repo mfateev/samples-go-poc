@@ -2,13 +2,14 @@
 package helloworld
 
 import (
+	"context"
 	"time"
 
 	"github.com/mfateev/sdk-go-poc/workflow"
 )
 
 //go:isolate
-func HelloWorld(name string) (string, error) {
-	greeting, err := workflow.ExecuteActivityWithContext(Activity, 10*time.Second, name)
+func HelloWorld(ctx context.Context, name string) (string, error) {
+	greeting, err := workflow.ExecuteActivity(ctx, Activity, 10*time.Second, name)
 	return greeting, err
 }

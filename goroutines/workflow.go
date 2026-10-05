@@ -2,6 +2,7 @@
 package goroutines
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -18,14 +19,14 @@ type greetingResult struct {
 // order even when Temporal delivers activity completions in a different order.
 //
 //go:isolate
-func GreetAll(names []string) ([]string, error) {
+func GreetAll(ctx context.Context, names []string) ([]string, error) {
 	results := make(chan greetingResult)
 	var pending sync.WaitGroup
 	for index, name := range names {
 		pending.Add(1)
 		go func() {
 			defer pending.Done()
-			greeting, err := workflow.ExecuteActivityWithContext(Greet, 10*time.Second, name)
+			greeting, err := workflow.ExecuteActivity(ctx, Greet, 10*time.Second, name)
 			results <- greetingResult{index: index, greeting: greeting, err: err}
 		}()
 	}

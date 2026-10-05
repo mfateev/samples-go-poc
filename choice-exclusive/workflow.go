@@ -2,6 +2,7 @@
 package choiceexclusive
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -16,24 +17,26 @@ const (
 )
 
 //go:isolate
-func ExclusiveChoice() error {
-	choice, err := workflow.ExecuteActivityByName[string]("GetOrder", 10*time.Second)
+func ExclusiveChoice(ctx context.Context) error {
+	// A nil receiver is only a method identifier. Temporal invokes the
+	// registered host OrderActivities instance, with its configured choices.
+	var orders *OrderActivities
+	choice, err := workflow.ExecuteActivityNoInput(ctx, orders.GetOrder, 10*time.Second)
 	if err != nil {
 		return err
 	}
-	var activityName string
+	var selected func(context.Context, string) error
 	switch choice {
 	case OrderChoiceApple:
-		activityName = "OrderApple"
+		selected = orders.OrderApple
 	case OrderChoiceBanana:
-		activityName = "OrderBanana"
+		selected = orders.OrderBanana
 	case OrderChoiceCherry:
-		activityName = "OrderCherry"
+		selected = orders.OrderCherry
 	case OrderChoiceOrange:
-		activityName = "OrderOrange"
+		selected = orders.OrderOrange
 	default:
 		return fmt.Errorf("unknown order choice: %v", choice)
 	}
-	_, err = workflow.ExecuteActivityByName[struct{}](activityName, 10*time.Second, choice)
-	return err
+	return workflow.ExecuteActivityError(ctx, selected, 10*time.Second, choice)
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"isolate"
+	"reflect"
 	"time"
 
 	choice "github.com/mfateev/samples-go-poc/choice-exclusive"
@@ -18,8 +19,8 @@ import (
 
 func main() {
 	handle, ok := isolate.LookupFunction(choice.ExclusiveChoice)
-	if !ok || handle.Signature().NumIn() != 0 || handle.Signature().NumOut() != 1 {
-		panic("expected a marked no-argument, error-only workflow")
+	if !ok || handle.Signature().NumIn() != 1 || handle.Signature().In(0) != reflect.TypeFor[context.Context]() || handle.Signature().NumOut() != 1 {
+		panic("expected a marked context-only, error-only workflow")
 	}
 	for _, selected := range []string{"apple", "banana", "cherry", "orange"} {
 		run(handle, selected, nil, nil, "")
@@ -41,14 +42,25 @@ func run(handle isolate.Handle, selected string, getErr, orderErr error, wantErr
 	check(i.Start())
 	deadline := time.After(5 * time.Second)
 	next := func(op uint32) *isolate.Command {
-		select {
-		case command, ok := <-i.Commands():
-			if !ok || command.Op != op {
-				panic(fmt.Sprintf("expected operation %d, got %+v", op, command))
+		for {
+			select {
+			case command, ok := <-i.Commands():
+				if ok && command.Op == workflow.OpWorkflowCancel {
+					continue
+				}
+				if ok && command.Op == workflow.OpCancellableCall {
+					var request workflow.CallRequest
+					check(json.Unmarshal(command.Payload, &request))
+					command.Op, command.Payload = request.Op, request.Payload
+				}
+				if !ok || command.Op != op {
+					panic(fmt.Sprintf("expected operation %d, got %+v", op, command))
+				}
+				return command
+			case <-deadline:
+				panic("workflow did not make progress")
 			}
-			return command
-		case <-deadline:
-			panic("workflow did not make progress")
+
 		}
 	}
 	start := next(workflow.OpStartPayloads)
@@ -88,7 +100,7 @@ func validateActivity(command *isolate.Command, name, input string) {
 	if wantCount != 0 {
 		check(converter.GetDefaultDataConverter().FromPayloads(&payloads, &decoded))
 	}
-	if request.Name != name || decoded != input || request.StartToCloseTimeout != 10*time.Second {
+	if !request.Function || request.Name != name || decoded != input || request.StartToCloseTimeout != 10*time.Second {
 		panic(fmt.Sprintf("activity = %+v, expected %s(%q)", request, name, input))
 	}
 
