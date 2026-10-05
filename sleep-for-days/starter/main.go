@@ -21,19 +21,12 @@ func main() {
 	}
 	defer c.Close()
 
-	interval := (30 * 24 * time.Hour).String()
-	if len(os.Args) > 1 {
-		interval = os.Args[1]
-	}
-	if duration, err := time.ParseDuration(interval); err != nil || duration <= 0 {
-		log.Fatal("interval must be a positive Go duration")
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	run, err := c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
 		ID:        fmt.Sprintf("sleep-for-days-poc-%d", time.Now().UnixNano()),
 		TaskQueue: "sleep-for-days-poc",
-	}, "SleepForDays", interval)
+	}, "SleepForDays")
 	if err != nil {
 		log.Fatal(err)
 	}

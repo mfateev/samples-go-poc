@@ -163,8 +163,8 @@ discovers marked functions through the host's imports and generates typed
 invokers and per-instance state factories. No isolate config, workflow `main`,
 or special build flags are needed. Arguments and results use Temporal's default data converter
 inside the isolate: `HelloWorld` takes and returns a string, `ExclusiveChoice`
-takes no arguments and returns the selected fruit, and `SleepForDays` takes a
-duration string and returns `"done"`. The activities and workers are host-side;
+takes no arguments and returns the selected fruit, and `SleepForDays` takes no
+arguments and returns `"done"`. The activities and workers are host-side;
 activity and signal operations still use byte slices. The isolate SDK comes
 from the sibling branch checkout; upstream dependencies use the module files.
 
@@ -281,13 +281,14 @@ future work.
 
 ## 6. Concurrent sleep-for-days fixture
 
-The upstream `sleep-for-days` workflow starts an activity future, then selects
-between a timer future and a `complete` signal channel. The port keeps those
-operations concurrent: `workflow.ExecuteActivityAsync` returns a result channel,
-native `time.After` returns a host-driven durable timer channel, and
-`workflow.GetSignalChannel("complete")` wraps the signal call. Ordinary Go
-`select` chooses the event. Its interval defaults to 30 days; the starter accepts a
-shorter positive Go duration such as `1m` for experiments.
+The [upstream `sleep-for-days` workflow](https://github.com/temporalio/samples-go/blob/main/sleep-for-days/sleepfordays_workflow.go)
+takes no workflow arguments. It schedules an email immediately and after each
+30-day timer, stopping when a `complete` signal arrives. It does not await the
+email activity's future or inspect its result. The port preserves that behavior:
+`workflow.ExecuteActivityAsync` schedules the email and its result channel is
+ignored. Ordinary Go `select` waits only on native `time.After(30 * 24 * time.Hour)`
+and `workflow.GetSignalChannel("complete")`. The email message remains
+`"Sleeping for 30 days"`; the starter passes no arguments.
 
 The worker builds, but **this workflow is not yet supported for live execution
 or replay**. The current Temporal bridge returns from a Workflow Task when it
@@ -295,6 +296,11 @@ sees the first blocked host call. It cannot yet observe that all isolate
 goroutines have become quiescent, so the other concurrent calls can be missed
 or processed in a later task. Deterministic scheduling and an exact quiescence
 barrier are needed before this sample is an acceptance test.
+
+`go test ./sleep-for-days` uses a direct isolate host to check the no-argument
+entry, repeated 30-day timers, completion signals, and independence from pending
+or failed email activities. This checks the sample logic without claiming that
+the Temporal task adapter supports concurrent execution yet.
 
 After that bridge work, run the fixture from `samples-go-poc` with the server
 started as in step 4:
@@ -308,7 +314,7 @@ the Workflow ID printed by the starter:
 
 ```bash
 cd "$HOME/temporal-isolates-poc/samples-go-poc"
-../golang-go/bin/go run ./sleep-for-days/starter 1m
+../golang-go/bin/go run ./sleep-for-days/starter
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow signal \
   --workflow-id YOUR_WORKFLOW_ID --name complete
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
