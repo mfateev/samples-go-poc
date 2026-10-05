@@ -11,6 +11,7 @@ import (
 	hello "github.com/mfateev/samples-go-poc/helloworld"
 	sleep "github.com/mfateev/samples-go-poc/sleep-for-days"
 	"github.com/mfateev/sdk-go-poc/worker"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/converter"
 )
@@ -32,6 +33,7 @@ func main() {
 		os.Exit(2)
 	}
 	replayer := worker.NewWorkflowReplayer()
+	replayer.RegisterActivityWithOptions(hello.Activity, activity.RegisterOptions{Name: "HelloWorldActivity"})
 	replayer.RegisterWorkflow(fn)
 	if err := replayer.ReplayWorkflowHistoryFromJSONFile(nil, os.Args[2]); err != nil {
 		fmt.Fprintln(os.Stderr, err)

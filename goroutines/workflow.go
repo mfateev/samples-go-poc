@@ -25,7 +25,7 @@ func GreetAll(names []string) ([]string, error) {
 		pending.Add(1)
 		go func() {
 			defer pending.Done()
-			greeting, err := workflow.ExecuteActivity[string]("Greet", 10*time.Second, name)
+			greeting, err := workflow.ExecuteActivityWithContext(Greet, 10*time.Second, name)
 			results <- greetingResult{index: index, greeting: greeting, err: err}
 		}()
 	}

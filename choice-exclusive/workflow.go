@@ -17,7 +17,7 @@ const (
 
 //go:isolate
 func ExclusiveChoice() error {
-	choice, err := workflow.ExecuteActivity[string]("GetOrder", 10*time.Second)
+	choice, err := workflow.ExecuteActivityByName[string]("GetOrder", 10*time.Second)
 	if err != nil {
 		return err
 	}
@@ -34,6 +34,6 @@ func ExclusiveChoice() error {
 	default:
 		return fmt.Errorf("unknown order choice: %v", choice)
 	}
-	_, err = workflow.ExecuteActivity[struct{}](activityName, 10*time.Second, choice)
+	_, err = workflow.ExecuteActivityByName[struct{}](activityName, 10*time.Second, choice)
 	return err
 }

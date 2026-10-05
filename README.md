@@ -184,7 +184,7 @@ For example, the hello world worker registers `helloworld.HelloWorld`, declared 
 ```go
 //go:isolate
 func HelloWorld(name string) (string, error) {
-    greeting, err := workflow.ExecuteActivity[string]("HelloWorldActivity", 10*time.Second, name)
+    greeting, err := workflow.ExecuteActivityWithContext(Activity, 10*time.Second, name)
     return greeting, err
 }
 ```
@@ -250,8 +250,8 @@ workflow schedules `GetOrder`, then one of `OrderApple`, `OrderBanana`,
 and Temporal records that result for replay. The workflow itself returns no
 result, matching [upstream](https://github.com/temporalio/samples-go/blob/main/choice-exclusive/workflow.go).
 The worker configures an `OrderActivities` instance and registers its native
-methods directly. Generic `ExecuteActivity[string]` decodes GetOrder
-results inside the isolate; `ExecuteActivity[struct{}]` waits for the error-only
+methods directly. Generic `ExecuteActivityByName[string]` decodes GetOrder
+results inside the isolate; `ExecuteActivityByName[struct{}]` waits for the error-only
 order activities. Both activity failures
 and unknown choices fail the workflow. `go test ./choice-exclusive` exercises all
 four branches, both activity failure paths, unknown choices, and configured
@@ -302,7 +302,7 @@ The [upstream `sleep-for-days` workflow](https://github.com/temporalio/samples-g
 takes no workflow arguments. It schedules an email immediately and after each
 30-day timer, stopping when a `complete` signal arrives. It does not await the
 email activity's future or inspect its result. The port preserves that behavior:
-`workflow.ExecuteActivityAsync` schedules the email and its result channel is
+`workflow.ExecuteActivityAsyncByName[struct{}]` schedules the email and its result channel is
 ignored. Ordinary Go `select` waits only on native `time.After(30 * 24 * time.Hour)`
 and `workflow.GetSignalChannel("complete")`. The email message remains
 `"Sleeping for 30 days"`; the starter passes no arguments.
@@ -385,3 +385,19 @@ the POC build cache:
 GOCACHE="$HOME/temporal-isolates-poc/go-build-cache" \
   "$HOME/temporal-isolates-poc/golang-go/bin/go" clean -cache
 ```
+
+### Activity type inference
+
+The helloworld and goroutines samples pass host activity functions directly to
+`workflow.ExecuteActivityWithContext(Activity, timeout, input)` and
+`workflow.ExecuteActivityWithContext(Greet, timeout, name)`. Go infers the input
+and result types; no explicit `[string]` or cast is needed. The worker supplies
+the activity context. Activities with signature `func(Input) (Output, error)`
+use `workflow.ExecuteActivity` instead. Both forms have async channel variants.
+The function identifies host work and never runs inside the workflow isolate.
+
+Helloworld preserves its `HelloWorldActivity` registration alias. The replay
+program registers that same activity alias as metadata before replaying.
+Choice-exclusive (zero inputs/error-only results) and sleep-for-days (error-only
+email) use `ExecuteActivityByName` and `ExecuteActivityAsyncByName`. These forms
+retain explicit result types and support arbitrary argument counts.
