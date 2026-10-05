@@ -35,7 +35,13 @@ func main() {
 }
 
 func run(handle isolate.Handle, names []string, failed bool) {
-	i, err := isolate.New(isolate.Config{Deterministic: true, Program: handle.Program(func() { _ = workflow.RunFunction(handle) })})
+	clock := time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
+	i, err := isolate.New(isolate.Config{
+		Deterministic: true,
+		Program:       handle.Program(func() { _ = workflow.RunFunction(handle) }),
+		InitialTime:   &clock,
+		TimerOp:       workflow.OpSleep,
+	})
 	check(err)
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
