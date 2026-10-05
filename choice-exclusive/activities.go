@@ -1,40 +1,37 @@
 package choiceexclusive
 
 import (
-	"context"
-	"errors"
+	"fmt"
 	"math/rand"
-
-	"go.temporal.io/sdk/activity"
 )
 
-var orderChoices = [...]string{"apple", "banana", "cherry", "orange"}
-
-// GetOrder chooses an order on the host side, as in the upstream sample.
-func GetOrder(_ context.Context, _ []byte) ([]byte, error) {
-	return []byte(orderChoices[rand.Intn(len(orderChoices))]), nil
+// OrderActivities configures the choices offered by the host activities.
+type OrderActivities struct {
+	OrderChoices []string
 }
 
-func order(ctx context.Context, choice []byte, expected string) ([]byte, error) {
-	if string(choice) != expected {
-		return nil, errors.New("unexpected order choice: " + string(choice))
-	}
-	activity.GetLogger(ctx).Info("Order choice", "choice", expected)
-	return nil, nil
+func (a *OrderActivities) GetOrder() (string, error) {
+	order := a.OrderChoices[rand.Intn(len(a.OrderChoices))]
+	fmt.Printf("Order is for %s\n", order)
+	return order, nil
 }
 
-func OrderApple(ctx context.Context, choice []byte) ([]byte, error) {
-	return order(ctx, choice, "apple")
+func (a *OrderActivities) OrderApple(choice string) error {
+	fmt.Printf("Order choice: %v\n", choice)
+	return nil
 }
 
-func OrderBanana(ctx context.Context, choice []byte) ([]byte, error) {
-	return order(ctx, choice, "banana")
+func (a *OrderActivities) OrderBanana(choice string) error {
+	fmt.Printf("Order choice: %v\n", choice)
+	return nil
 }
 
-func OrderCherry(ctx context.Context, choice []byte) ([]byte, error) {
-	return order(ctx, choice, "cherry")
+func (a *OrderActivities) OrderCherry(choice string) error {
+	fmt.Printf("Order choice: %v\n", choice)
+	return nil
 }
 
-func OrderOrange(ctx context.Context, choice []byte) ([]byte, error) {
-	return order(ctx, choice, "orange")
+func (a *OrderActivities) OrderOrange(choice string) error {
+	fmt.Printf("Order choice: %v\n", choice)
+	return nil
 }

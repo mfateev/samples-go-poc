@@ -163,7 +163,7 @@ discovers marked functions through the host's imports and generates typed
 invokers and per-instance state factories. No isolate config, workflow `main`,
 or special build flags are needed. Arguments and results use Temporal's default data converter
 inside the isolate: `HelloWorld` takes and returns a string, `ExclusiveChoice`
-takes no arguments and returns the selected fruit, and `SleepForDays` takes no
+takes no arguments and returns only an error, and `SleepForDays` takes no
 arguments and returns `"done"`. The activities and workers are host-side;
 activity and signal operations still use byte slices. The isolate SDK comes
 from the sibling branch checkout; upstream dependencies use the module files.
@@ -239,10 +239,16 @@ export GOCACHE="$HOME/temporal-isolates-poc/go-build-cache"
 ```
 
 The first starter prints `Hello Temporal!`; the second prints
-`order completed: <fruit>`. Each also prints its Workflow ID and Run ID. The choice
+`order completed`. Each also prints its Workflow ID and Run ID. The choice
 workflow schedules `GetOrder`, then one of `OrderApple`, `OrderBanana`,
 `OrderCherry`, or `OrderOrange`. `GetOrder` chooses randomly in a host activity,
-and Temporal records that result for replay. `TEMPORAL_ADDRESS` can point the
+and Temporal records that result for replay. The workflow itself returns no
+result, matching [upstream](https://github.com/temporalio/samples-go/blob/main/choice-exclusive/workflow.go).
+The worker configures an `OrderActivities` instance and wraps its native string
+arguments/results at the POC byte-slice activity boundary. Both activity failures
+and unknown choices fail the workflow. `go test ./choice-exclusive` exercises all
+four branches, both activity failure paths, unknown choices, and configured
+activity choices. `TEMPORAL_ADDRESS` can point the
 workers and starters at another server; the default is `localhost:7233`.
 
 The typed versions of both serial samples completed on Temporal CLI 1.9.1's
@@ -271,7 +277,9 @@ read -r CHOICE_WORKFLOW_ID
 
 Both replays should print `replay passed`. Use histories from the current typed
 samples; histories recorded by the earlier byte-only workflow versions use a
-different argument/result contract. The workers and server can then be stopped
+different argument/result contract. The earlier Choice port also returned the
+fruit; that result was removed to match upstream. Record fresh Choice histories
+after this change. The workers and server can then be stopped
 with Ctrl-C in their terminals.
 
 The first two ports use named typed workflow functions with blocking activity

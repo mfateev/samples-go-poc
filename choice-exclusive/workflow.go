@@ -2,31 +2,38 @@
 package choiceexclusive
 
 import (
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mfateev/sdk-go-poc/workflow"
 )
 
+const (
+	OrderChoiceApple  = "apple"
+	OrderChoiceBanana = "banana"
+	OrderChoiceCherry = "cherry"
+	OrderChoiceOrange = "orange"
+)
+
 //go:isolate
-func ExclusiveChoice() (string, error) {
+func ExclusiveChoice() error {
 	choice, err := workflow.ExecuteActivity("GetOrder", nil, 10*time.Second)
 	if err != nil {
-		return "", err
+		return err
 	}
 	var activityName string
 	switch string(choice) {
-	case "apple":
+	case OrderChoiceApple:
 		activityName = "OrderApple"
-	case "banana":
+	case OrderChoiceBanana:
 		activityName = "OrderBanana"
-	case "cherry":
+	case OrderChoiceCherry:
 		activityName = "OrderCherry"
-	case "orange":
+	case OrderChoiceOrange:
 		activityName = "OrderOrange"
 	default:
-		return "", errors.New("unknown order choice: " + string(choice))
+		return fmt.Errorf("unknown order choice: %v", string(choice))
 	}
 	_, err = workflow.ExecuteActivity(activityName, choice, 10*time.Second)
-	return string(choice), err
+	return err
 }
