@@ -16,7 +16,7 @@ func SleepForDays(ctx context.Context) (string, error) {
 	for {
 		// The upstream sample schedules the email without awaiting its future.
 		// Completion or failure of the email does not control this workflow.
-		_ = workflow.ExecuteActivityAsyncByName[struct{}](ctx, "SendEmail", 10*time.Second, "Sleeping for 30 days")
+		_ = workflow.ExecuteActivityAsyncError(ctx, SendEmail, 10*time.Second, "Sleeping for 30 days")
 		select {
 		case <-ctx.Done():
 			return "", ctx.Err()
