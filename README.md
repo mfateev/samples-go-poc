@@ -402,8 +402,10 @@ remain inside their isolates. Activities never run inside workflows.
 Helloworld preserves its `HelloWorldActivity` registration alias, including
 replay metadata. Choice-exclusive uses method references and its registered
 host receiver. Sleep-for-days intentionally ignores its email future.
-Goroutines waits on activity futures inside ordinary Go goroutines and sends
-results through native channels. The earlier typed activity calls remain
+Goroutines uses `ExecuteActivity(...).ToChannel()` inside ordinary Go goroutines
+and sends ordered results through native channels. The channel delivers
+`FutureResult{Value, Err}` once, then closes; `Value.Get(&greeting)` extracts the
+typed result without casting. The earlier typed activity calls remain
 commented out in the SDK pending future API work.
 
 ### Workflow cancellation
