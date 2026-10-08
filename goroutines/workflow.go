@@ -27,12 +27,8 @@ func GreetAll(ctx context.Context, names []string) ([]string, error) {
 		pending.Add(1)
 		go func() {
 			defer pending.Done()
-			outcome := <-workflow.ExecuteActivity(ctx, Greet, name).ToChannel()
 			var greeting string
-			err := outcome.Err
-			if err == nil {
-				err = outcome.Value.Get(&greeting)
-			}
+			err := workflow.ExecuteActivity(ctx, Greet, name).Get(ctx, &greeting)
 			results <- greetingResult{index: index, greeting: greeting, err: err}
 		}()
 	}
