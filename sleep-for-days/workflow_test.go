@@ -17,7 +17,7 @@ func TestSleepForDaysBehavior(t *testing.T) {
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build driver: %v\n%s", err, output)
 	}
-	for _, scenario := range []string{"pending-email", "failed-email"} {
+	for _, scenario := range []string{"pending-email", "signal-first", "email-first", "timer-first", "failed-email", "late-failed-email", "canceled"} {
 		t.Run(scenario, func(t *testing.T) {
 			if output, err := exec.Command(binary, scenario).CombinedOutput(); err != nil {
 				t.Fatalf("driver: %v\n%s", err, output)

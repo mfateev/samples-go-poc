@@ -15,21 +15,31 @@ func SleepForDays(ctx context.Context) (string, error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
 	signals := workflow.GetSignalChannel(ctx, "complete")
 	for {
-		// The upstream sample schedules the email without awaiting its future.
-		// Completion or failure of the email does not control this workflow.
-		_ = workflow.ExecuteActivity(ctx, SendEmail, "Sleeping for 30 days")
-		select {
-		case <-ctx.Done():
-			return "", ctx.Err()
-		case received, ok := <-signals:
-			if !ok {
-				return "", errors.New("complete signal channel closed")
+		email := workflow.ExecuteActivity(ctx, SendEmail, "Sleeping for 30 days").ToChannel()
+		timer := time.After(30 * 24 * time.Hour)
+		// Finish both waits before starting the next iteration. Setting a
+		// consumed channel to nil disables that arm of select.
+		for email != nil || timer != nil {
+			select {
+			case <-ctx.Done():
+				return "", ctx.Err()
+			case result := <-email:
+				// SendEmail returns only error, so there is no value to extract.
+				if result.Err != nil {
+					return "", result.Err
+				}
+				email = nil
+			case received, ok := <-signals:
+				if !ok {
+					return "", errors.New("complete signal channel closed")
+				}
+				if received.Err != nil {
+					return "", received.Err
+				}
+				return "done", nil
+			case <-timer:
+				timer = nil
 			}
-			if received.Err != nil {
-				return "", received.Err
-			}
-			return "done", nil
-		case <-time.After(30 * 24 * time.Hour):
 		}
 	}
 }

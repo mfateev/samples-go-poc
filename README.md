@@ -304,11 +304,17 @@ select, canonical string/integer maps, and an exact suspension fence.
 
 The [upstream `sleep-for-days` workflow](https://github.com/temporalio/samples-go/blob/main/sleep-for-days/sleepfordays_workflow.go)
 takes no workflow arguments. It schedules an email immediately and after each
-30-day timer, stopping when a `complete` signal arrives. It does not await the
-email activity's future or inspect its result. The port preserves that behavior:
-`workflow.ExecuteActivity(ctx, SendEmail, message)` schedules the email and its
-future is ignored. Ordinary Go `select` waits only on native `time.After(30 * 24 * time.Hour)`
-and `workflow.GetSignalChannel(ctx, "complete")`. The email message remains
+30-day timer, stopping when a `complete` signal arrives. This port also handles
+email completion through `ExecuteActivity(...).ToChannel()`. Ordinary Go
+`select` waits on email results, native `time.After(30 * 24 * time.Hour)`,
+the signal channel and context cancellation. An email failure fails the workflow;
+a successful email leaves the current timer and signal waits active. Each
+iteration selects directly on its email's result channel and waits for both
+email completion and its 30-day timer before starting the next iteration.
+If the timer fires first, the workflow keeps waiting for that email; sends
+never overlap. Signals and cancellation can finish either wait immediately.
+`SendEmail` returns only error, so
+the workflow checks `FutureResult.Err` without extracting a value. The message remains
 `"Sleeping for 30 days"`; the starter passes no arguments.
 
 The worker schedules every concurrent command before ending a Workflow Task.
@@ -320,7 +326,9 @@ release gate.
 
 `go test ./sleep-for-days` enables deterministic dispatch with a direct isolate
 host to check the no-argument entry, repeated 30-day timers, completion signals,
-and independence from pending or failed email activities.
+both email-first and timer-first completion, no overlapping sends, completion
+signals with either wait pending, propagated immediate and late email failures,
+and workflow cancellation.
 
 Run the fixture from `samples-go-poc` with the server started as in step 4:
 
@@ -342,6 +350,10 @@ cd "$HOME/temporal-isolates-poc/samples-go-poc"
 ```
 
 The expected final result is `done` and `replay passed: SleepForDays`.
+The port now propagates email failures and waits for each send before starting
+the next iteration. Histories that previously ignored a failed email or
+scheduled overlapping sends need a versioned workflow change or a fresh
+execution. The workflow input and successful result contracts are unchanged.
 
 ## 7. Native goroutines and activity fan-out
 
@@ -401,7 +413,8 @@ remain inside their isolates. Activities never run inside workflows.
 
 Helloworld preserves its `HelloWorldActivity` registration alias, including
 replay metadata. Choice-exclusive uses method references and its registered
-host receiver. Sleep-for-days intentionally ignores its email future.
+host receiver. Sleep-for-days selects on email activity completion alongside
+its signal and timer and propagates email errors.
 Goroutines uses `ExecuteActivity(...).Get(ctx, &greeting)` inside ordinary Go
 goroutines and sends ordered results through native channels. Use
 `Future.ToChannel()` when selecting directly on a future alongside other
@@ -416,4 +429,5 @@ The sleep-for-days sample selects on `ctx.Done()` alongside its signal and timer
 Child contexts and `context.WithTimeout` work with deterministic history time;
 activities use their own host context and should heartbeat for prompt cancellation.
 The context parameter is injected by the SDK and is never included in CLI inputs
-or serialized payloads. Existing non-canceled sample histories remain compatible.
+or serialized payloads. Context parameters leave the input and result contracts
+unchanged; see the sample-specific notes above for workflow behavior changes.
