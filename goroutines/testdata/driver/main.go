@@ -50,6 +50,7 @@ func run(handle isolate.Handle, names []string, failed bool) {
 	}()
 	check(i.Start())
 	deadline := time.After(5 * time.Second)
+	awaits := make(map[uint64]*isolate.Command)
 	next := func(op uint32) *isolate.Command {
 		for {
 			select {
@@ -63,6 +64,14 @@ func run(handle isolate.Handle, names []string, failed bool) {
 						panic(err)
 					}
 					command.Op, command.Payload = request.Op, request.Payload
+				}
+				if command != nil && command.Op == workflow.OpAwaitActivity {
+					var id uint64
+					check(json.Unmarshal(command.Payload, &id))
+					awaits[id] = command
+					if op != workflow.OpAwaitActivity {
+						continue
+					}
 				}
 				if command == nil || command.Op != op {
 					panic(fmt.Sprintf("expected %d, got %+v", op, command))
@@ -79,9 +88,9 @@ func run(handle isolate.Handle, names []string, failed bool) {
 	inputBytes, err := proto.Marshal(input)
 	check(err)
 	next(workflow.OpStartPayloads).Reply(marshal(workflow.PayloadStart{Name: handle.Name(), Payloads: inputBytes}), nil)
-	var requests []*isolate.Command
+	var ids []uint64
 	for _, name := range names {
-		command := next(workflow.OpActivityPayloads)
+		command := next(workflow.OpScheduleActivity)
 		var request workflow.ActivityPayloadRequest
 		check(json.Unmarshal(command.Payload, &request))
 		var args commonpb.Payloads
@@ -91,14 +100,18 @@ func run(handle isolate.Handle, names []string, failed bool) {
 		if len(args.Payloads) != 1 {
 			panic("wrong greeting argument count")
 		}
-		if request.Name != "Greet" || input != name || request.StartToCloseTimeout != 10*time.Second {
+		if request.Name != "Greet" || input != name || request.Options == nil || request.Options.StartToCloseTimeout != 10*time.Second {
 			panic(fmt.Sprintf("unexpected activity %+v", request))
 		}
-		requests = append(requests, command)
+		ids = append(ids, request.ID)
+		command.Reply(nil, nil)
 	}
-	if len(requests) != 0 {
+	for len(awaits) < len(names) {
+		next(workflow.OpAwaitActivity)
+	}
+	if len(ids) != 0 {
 		check(i.Suspend())
-		for index := len(requests) - 1; index >= 0; index-- {
+		for index := len(ids) - 1; index >= 0; index-- {
 			var cause error
 			if failed && index == 1 {
 				cause = errors.New("greeting failed")
@@ -107,7 +120,11 @@ func run(handle isolate.Handle, names []string, failed bool) {
 			check(err)
 			encoded, err := proto.Marshal(result)
 			check(err)
-			requests[index].Reply(encoded, cause)
+			outcome := workflow.ActivityOutcome{Payloads: encoded}
+			if cause != nil {
+				outcome.Error = cause.Error()
+			}
+			awaits[ids[index]].Reply(marshal(outcome), nil)
 		}
 		check(i.Resume())
 	}

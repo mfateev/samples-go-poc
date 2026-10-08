@@ -20,13 +20,15 @@ type greetingResult struct {
 //
 //go:isolate
 func GreetAll(ctx context.Context, names []string) ([]string, error) {
+	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
 	results := make(chan greetingResult)
 	var pending sync.WaitGroup
 	for index, name := range names {
 		pending.Add(1)
 		go func() {
 			defer pending.Done()
-			greeting, err := workflow.ExecuteActivity(ctx, Greet, 10*time.Second, name)
+			var greeting string
+			err := workflow.ExecuteActivity(ctx, Greet, name).Get(ctx, &greeting)
 			results <- greetingResult{index: index, greeting: greeting, err: err}
 		}()
 	}

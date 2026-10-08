@@ -10,6 +10,8 @@ import (
 
 //go:isolate
 func HelloWorld(ctx context.Context, name string) (string, error) {
-	greeting, err := workflow.ExecuteActivity(ctx, Activity, 10*time.Second, name)
+	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
+	var greeting string
+	err := workflow.ExecuteActivity(ctx, Activity, name).Get(ctx, &greeting)
 	return greeting, err
 }

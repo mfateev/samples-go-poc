@@ -20,8 +20,10 @@ const (
 func ExclusiveChoice(ctx context.Context) error {
 	// A nil receiver is only a method identifier. Temporal invokes the
 	// registered host OrderActivities instance, with its configured choices.
+	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
 	var orders *OrderActivities
-	choice, err := workflow.ExecuteActivityNoInput(ctx, orders.GetOrder, 10*time.Second)
+	var choice string
+	err := workflow.ExecuteActivity(ctx, orders.GetOrder).Get(ctx, &choice)
 	if err != nil {
 		return err
 	}
@@ -38,5 +40,5 @@ func ExclusiveChoice(ctx context.Context) error {
 	default:
 		return fmt.Errorf("unknown order choice: %v", choice)
 	}
-	return workflow.ExecuteActivityError(ctx, selected, 10*time.Second, choice)
+	return workflow.ExecuteActivity(ctx, selected, choice).Get(ctx, nil)
 }

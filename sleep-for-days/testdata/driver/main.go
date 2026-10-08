@@ -4,7 +4,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"isolate"
 	"os"
@@ -50,6 +49,12 @@ func main() {
 					check(json.Unmarshal(command.Payload, &request))
 					command.Op, command.Payload = request.Op, request.Payload
 				}
+				if ok && command.Op == workflow.OpAwaitActivity {
+					if os.Args[1] == "failed-email" {
+						command.Reply(marshal(workflow.ActivityOutcome{Error: "email failed"}), nil)
+					}
+					continue
+				}
 				if !ok {
 					panic("isolate stopped before completion")
 				}
@@ -72,7 +77,7 @@ func main() {
 		for !email || timer == nil || signal == nil {
 			command := next()
 			switch command.Op {
-			case workflow.OpActivityPayloads:
+			case workflow.OpScheduleActivity:
 				var request workflow.ActivityPayloadRequest
 				check(json.Unmarshal(command.Payload, &request))
 				var args commonpb.Payloads
@@ -82,15 +87,12 @@ func main() {
 				if len(args.Payloads) != 1 {
 					panic("wrong email argument count")
 				}
-				if email || request.Name != "SendEmail" || message != "Sleeping for 30 days" || request.StartToCloseTimeout != 10*time.Second {
+				if email || request.Name != "SendEmail" || message != "Sleeping for 30 days" || request.Options == nil || request.Options.StartToCloseTimeout != 10*time.Second {
 					panic("unexpected email request")
 				}
 				email = true
-				if os.Args[1] == "failed-email" {
-					command.Reply(nil, errors.New("email failed"))
-				}
-				// Otherwise leave the email pending: the timer and signal must
-				// still progress without any activity result.
+				command.Reply(nil, nil)
+				// The result wait stays pending unless the failed-email scenario replies.
 			case workflow.OpSleep:
 				var duration time.Duration
 				check(json.Unmarshal(command.Payload, &duration))

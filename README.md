@@ -184,7 +184,11 @@ For example, the hello world worker registers `helloworld.HelloWorld`, declared 
 ```go
 //go:isolate
 func HelloWorld(ctx context.Context, name string) (string, error) {
-    greeting, err := workflow.ExecuteActivity(ctx, Activity, 10*time.Second, name)
+    ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
+        StartToCloseTimeout: 10*time.Second,
+    })
+    var greeting string
+    err := workflow.ExecuteActivity(ctx, Activity, name).Get(ctx, &greeting)
     return greeting, err
 }
 ```
@@ -250,9 +254,9 @@ workflow schedules `GetOrder`, then one of `OrderApple`, `OrderBanana`,
 and Temporal records that result for replay. The workflow itself returns no
 result, matching [upstream](https://github.com/temporalio/samples-go/blob/main/choice-exclusive/workflow.go).
 The worker configures an `OrderActivities` instance and registers its native
-methods directly. `ExecuteActivityNoInput` infers GetOrder results from its method signature;
-`ExecuteActivityError` waits for the error-only
-order activities. Both activity failures
+methods directly. `ExecuteActivity(ctx, orders.GetOrder).Get(ctx, &choice)`
+reads the choice; `ExecuteActivity(ctx, selected, choice).Get(ctx, nil)` waits
+for the selected error-only activity. Both activity failures
 and unknown choices fail the workflow. `go test ./choice-exclusive` exercises all
 four branches, both activity failure paths, unknown choices, and configured
 activity choices. `TEMPORAL_ADDRESS` can point the
@@ -302,8 +306,8 @@ The [upstream `sleep-for-days` workflow](https://github.com/temporalio/samples-g
 takes no workflow arguments. It schedules an email immediately and after each
 30-day timer, stopping when a `complete` signal arrives. It does not await the
 email activity's future or inspect its result. The port preserves that behavior:
-`workflow.ExecuteActivityAsyncByName[struct{}]` schedules the email and its result channel is
-ignored. Ordinary Go `select` waits only on native `time.After(30 * 24 * time.Hour)`
+`workflow.ExecuteActivity(ctx, SendEmail, message)` schedules the email and its
+future is ignored. Ordinary Go `select` waits only on native `time.After(30 * 24 * time.Hour)`
 and `workflow.GetSignalChannel(ctx, "complete")`. The email message remains
 `"Sleeping for 30 days"`; the starter passes no arguments.
 
@@ -386,23 +390,21 @@ GOCACHE="$HOME/temporal-isolates-poc/go-build-cache" \
   "$HOME/temporal-isolates-poc/golang-go/bin/go" clean -cache
 ```
 
-### Activity type inference
+### SDK-compatible activities
 
-The helloworld and goroutines samples pass host activity functions directly to
-`workflow.ExecuteActivity(ctx, Activity, timeout, input)` and
-`workflow.ExecuteActivity(ctx, Greet, timeout, name)`. Go infers the input
-and result types; no explicit `[string]` or cast is needed. The worker supplies
-the activity context. Every activity must have a leading standard `context.Context` parameter.
-Every isolate workflow also receives a standard context from the SDK. Both forms have async channel variants.
-The function identifies host work and never runs inside the workflow isolate.
+All samples use `WithActivityOptions(ctx, ActivityOptions{...})` followed by
+`ExecuteActivity(ctx, activity, args...).Get(ctx, &result)`. Activity references
+or literal registered names accept the same inputs as the current Go SDK.
+Error-only activities use `Get(ctx, nil)`. Every activity takes standard
+`context.Context` first; the worker supplies its host context. Workflow contexts
+remain inside their isolates. Activities never run inside workflows.
 
-Helloworld preserves its `HelloWorldActivity` registration alias. The replay
-program registers that same activity alias as metadata before replaying.
-Choice-exclusive uses method references throughout: `ExecuteActivityNoInput`
-for GetOrder and `ExecuteActivityError` for the selected order method. The
-receiver is supplied by the registered host object. Sleep-for-days uses the
-name-based async API for its error-only email activity.
-
+Helloworld preserves its `HelloWorldActivity` registration alias, including
+replay metadata. Choice-exclusive uses method references and its registered
+host receiver. Sleep-for-days intentionally ignores its email future.
+Goroutines waits on activity futures inside ordinary Go goroutines and sends
+results through native channels. The earlier typed activity calls remain
+commented out in the SDK pending future API work.
 
 ### Workflow cancellation
 

@@ -71,14 +71,18 @@ func run(handle isolate.Handle, selected string, getErr, orderErr error, wantErr
 	}
 	start := next(workflow.OpStartPayloads)
 	start.Reply(marshal(workflow.PayloadStart{Name: handle.Name()}), nil)
-	activity := next(workflow.OpActivityPayloads)
+	activity := next(workflow.OpScheduleActivity)
 	validateActivity(activity, "GetOrder", "")
-	activity.Reply(encodeResult(selected), getErr)
+	activity.Reply(nil, nil)
+	await := next(workflow.OpAwaitActivity)
+	await.Reply(activityOutcome(encodeResult(selected), getErr), nil)
 	if getErr == nil && selected != "pear" {
-		activity = next(workflow.OpActivityPayloads)
+		activity = next(workflow.OpScheduleActivity)
 		name := map[string]string{"apple": "OrderApple", "banana": "OrderBanana", "cherry": "OrderCherry", "orange": "OrderOrange"}[selected]
 		validateActivity(activity, name, selected)
-		activity.Reply(nil, orderErr)
+		activity.Reply(nil, nil)
+		await = next(workflow.OpAwaitActivity)
+		await.Reply(activityOutcome(nil, orderErr), nil)
 	}
 	completion := next(workflow.OpCompletePayloads)
 	var result workflow.PayloadCompletion
@@ -106,7 +110,7 @@ func validateActivity(command *isolate.Command, name, input string) {
 	if wantCount != 0 {
 		check(converter.GetDefaultDataConverter().FromPayloads(&payloads, &decoded))
 	}
-	if !request.Function || request.Name != name || decoded != input || request.StartToCloseTimeout != 10*time.Second {
+	if !request.Function || request.Name != name || decoded != input || request.Options == nil || request.Options.StartToCloseTimeout != 10*time.Second {
 		panic(fmt.Sprintf("activity = %+v, expected %s(%q)", request, name, input))
 	}
 
@@ -130,4 +134,12 @@ func encodeResult(value any) []byte {
 	data, err := proto.Marshal(payloads)
 	check(err)
 	return data
+}
+
+func activityOutcome(payload []byte, err error) []byte {
+	o := workflow.ActivityOutcome{Payloads: payload}
+	if err != nil {
+		o.Error = err.Error()
+	}
+	return marshal(o)
 }
