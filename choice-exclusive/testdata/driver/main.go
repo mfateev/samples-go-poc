@@ -11,6 +11,7 @@ import (
 	"time"
 
 	choice "github.com/mfateev/samples-go-poc/choice-exclusive"
+	"github.com/mfateev/samples-go-poc/internal/testbridge"
 	"github.com/mfateev/sdk-go-poc/workflow"
 	commonpb "go.temporal.io/api/common/v1"
 	"go.temporal.io/sdk/converter"
@@ -70,7 +71,7 @@ func run(handle isolate.Handle, selected string, getErr, orderErr error, wantErr
 		}
 	}
 	start := next(workflow.OpStartPayloads)
-	start.Reply(marshal(workflow.PayloadStart{Name: handle.Name()}), nil)
+	testbridge.ReplyStart(start, workflow.PayloadStart{Name: handle.Name()})
 	activity := next(workflow.OpScheduleActivity)
 	validateActivity(activity, "GetOrder", "")
 	activity.Reply(nil, nil)

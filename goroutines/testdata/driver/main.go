@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/mfateev/samples-go-poc/goroutines"
+	"github.com/mfateev/samples-go-poc/internal/testbridge"
 	"github.com/mfateev/sdk-go-poc/workflow"
 	commonpb "go.temporal.io/api/common/v1"
 	"go.temporal.io/sdk/converter"
@@ -87,7 +88,7 @@ func run(handle isolate.Handle, names []string, failed bool) {
 	check(err)
 	inputBytes, err := proto.Marshal(input)
 	check(err)
-	next(workflow.OpStartPayloads).Reply(marshal(workflow.PayloadStart{Name: handle.Name(), Payloads: inputBytes}), nil)
+	testbridge.ReplyStart(next(workflow.OpStartPayloads), workflow.PayloadStart{Name: handle.Name(), Payloads: inputBytes})
 	var ids []uint64
 	for _, name := range names {
 		command := next(workflow.OpScheduleActivity)

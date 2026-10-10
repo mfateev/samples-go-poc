@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/mfateev/samples-go-poc/internal/testbridge"
 	sleepfordays "github.com/mfateev/samples-go-poc/sleep-for-days"
 	"github.com/mfateev/sdk-go-poc/workflow"
 	commonpb "go.temporal.io/api/common/v1"
@@ -84,7 +85,7 @@ func main() {
 		operations = append(operations, command.Op)
 		switch command.Op {
 		case workflow.OpStartPayloads:
-			command.Reply(marshal(workflow.PayloadStart{Name: handle.Name()}), nil)
+			testbridge.ReplyStart(command, workflow.PayloadStart{Name: handle.Name()})
 		case workflow.OpWorkflowCancel:
 			cancellation = command
 		case workflow.OpScheduleActivity:
@@ -119,6 +120,13 @@ func main() {
 				panic(fmt.Sprintf("unexpected timer duration: %v", duration))
 			}
 			timer = command
+		case workflow.OpRegisterSignal:
+			var registration workflow.SignalRegistration
+			check(json.Unmarshal(command.Payload, &registration))
+			if registration.Name != "complete" || registration.Options != (workflow.SignalChannelOptions{}) {
+				panic("unexpected signal registration")
+			}
+			command.Reply(nil, nil)
 		case workflow.OpSignal:
 			if signal != nil || string(command.Payload) != "complete" {
 				panic("unexpected signal subscription")

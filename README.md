@@ -27,8 +27,12 @@ and these examples in
 All three use the `task/modify-go-runtime-for-isolates` branch. The checked-in
 `go.work` makes the samples use the sibling SDK checkout directly, without
 pinning an isolate SDK version or commit in `go.mod`. Keep the repositories
-beside each other as shown below. The upstream Temporal Go SDK remains pinned
-because the adapter uses its internal workflow extension API.
+beside each other as shown below. The Temporal SDK dependency uses the audited
+`mfateev/temporal-go-sdk` tag `v1.49.0-isolates.1`, based on upstream v1.49.0,
+because the adapter uses supported fork integration hooks. Go downloads it
+automatically; no fourth checkout is needed. Compiler, SDK and samples still use
+the branches above. See the [SDK integration contracts](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/README.md#versioned-integration-contracts)
+for version checks and upgrade/rollback validation.
 
 ## 1. Prepare a Linux or macOS machine
 
