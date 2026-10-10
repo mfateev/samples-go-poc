@@ -6,6 +6,14 @@ and [choice-exclusive](https://github.com/temporalio/samples-go/tree/aaf79b6/cho
 The [sleep-for-days](https://github.com/temporalio/samples-go/tree/aaf79b6/sleep-for-days)
 port exercises concurrent activities, native timers, and signals with
 deterministic isolate dispatch.
+
+Deterministic isolates also support `crypto/rand` and UUID v4 generation. Native
+`select` and top-level random APIs share one replay-seeded stream. These bytes
+are predictable and must never be used for keys, passwords, authentication
+tokens or cryptographic secrets; generate those in host activities or codecs.
+Normal host `crypto/rand` keeps OS entropy. See the
+[SDK's randomness and security documentation](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/README.md#deterministic-randomness-and-security)
+for seed, replay and query behavior.
 The [goroutines](./goroutines/workflow.go) example adds native Go activity
 fan-out with channels and WaitGroup.
 The adapted sample code uses the upstream Apache 2.0 license in `LICENSE`.
