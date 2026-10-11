@@ -1,8 +1,10 @@
-go 1.26.0
+go 1.26.2
 
 // Clone sdk-go-poc on task/modify-go-runtime-for-isolates beside this repo.
 // Builds use that branch's source instead of a pinned SDK module version.
 use (
 	.
 	../sdk-go-poc
+	./codec-server
+	./grpc-proxy
 )

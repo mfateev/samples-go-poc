@@ -13,7 +13,7 @@ import (
 //go:isolate
 func SleepForDays(ctx context.Context) (string, error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
-	signals := workflow.GetSignalChannel(ctx, "complete")
+	signals := workflow.GetSignalChannel[[]byte](ctx, "complete")
 	for {
 		email := workflow.ExecuteActivity(ctx, SendEmail, "Sleeping for 30 days").ToChannel()
 		timer := time.After(30 * 24 * time.Hour)
@@ -29,12 +29,9 @@ func SleepForDays(ctx context.Context) (string, error) {
 					return "", result.Err
 				}
 				email = nil
-			case received, ok := <-signals:
+			case _, ok := <-signals:
 				if !ok {
 					return "", errors.New("complete signal channel closed")
-				}
-				if received.Err != nil {
-					return "", received.Err
 				}
 				return "done", nil
 			case <-timer:

@@ -127,6 +127,9 @@ func main() {
 				panic("unexpected signal registration")
 			}
 			command.Reply(nil, nil)
+		case workflow.OpFlushSignalChannels:
+			// This synthetic host has no queued signals during registration.
+			command.Reply(nil, nil)
 		case workflow.OpSignal:
 			if signal != nil || string(command.Payload) != "complete" {
 				panic("unexpected signal subscription")

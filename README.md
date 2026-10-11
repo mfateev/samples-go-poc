@@ -1,11 +1,11 @@
 # Temporal Go samples on the isolate POC SDK
 
-This module ports three examples from [Temporal's samples-go](https://github.com/temporalio/samples-go)
-at commit `aaf79b6`: [helloworld](https://github.com/temporalio/samples-go/tree/aaf79b6/helloworld)
-and [choice-exclusive](https://github.com/temporalio/samples-go/tree/aaf79b6/choice-exclusive).
-The [sleep-for-days](https://github.com/temporalio/samples-go/tree/aaf79b6/sleep-for-days)
-port exercises concurrent activities, native timers, and signals with
-deterministic isolate dispatch.
+This checkout includes **75 of the 83 sample groups** from
+[Temporal's samples-go at d378442](https://github.com/temporalio/samples-go/tree/d3784428122e0cd4b28e91a0cd86b589749abf28),
+rewritten for native Go workflows in deterministic isolates. See the
+[complete migration inventory](./MIGRATION.md) for every sample, the 8 blocked
+groups and their missing features, verification commands, and deployment limits.
+The existing `goroutines` example is an additional POC example.
 
 Deterministic isolates also support `crypto/rand` and UUID v4 generation. Native
 `select` and top-level random APIs share one replay-seeded stream. These bytes
@@ -119,6 +119,7 @@ git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates
 cd "$POC_ROOT/golang-go/src"
 GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
 "$POC_ROOT/golang-go/bin/go" version
+export PATH="$POC_ROOT/golang-go/bin:$PATH"
 export GOCACHE="$POC_ROOT/go-build-cache"
 mkdir -p "$GOCACHE"
 "$POC_ROOT/golang-go/bin/go" env GOCACHE
@@ -163,7 +164,7 @@ Run from `samples-go-poc` after the previous step:
 
 ```bash
 ../golang-go/bin/go mod download
-../golang-go/bin/go test ./...
+../golang-go/bin/go test -p 3 ./... ./codec-server/... ./grpc-proxy/...
 mkdir -p bin
 ../golang-go/bin/go build -o bin/helloworld-worker ./helloworld/worker
 ../golang-go/bin/go build -o bin/choice-worker ./choice-exclusive/worker
@@ -177,18 +178,21 @@ Workflow functions carry a `//go:isolate` directive. Workers import them and use
 the POC SDK's `worker.New` and normal `RegisterWorkflow(fn)` API. The build
 discovers marked functions through the host's imports and generates typed
 invokers and per-instance state factories. No isolate config, workflow `main`,
-or special build flags are needed. Arguments and results use Temporal's default data converter
-inside the isolate: `HelloWorld` takes and returns a string, `ExclusiveChoice`
-takes no arguments and returns only an error, and `SleepForDays` takes no
-arguments and returns `"done"`. The activities and workers are host-side;
-activity arguments/results use the default converter inside the isolate;
-signal operations still use byte slices. The isolate SDK comes
-from the sibling branch checkout; upstream dependencies use the module files.
+or special build flags are needed. Workflows use `context.Context`, native
+goroutines, channels, `select`, and timers. `workflow.GetSignalChannel[T]`
+returns the signal type directly through a native `<-chan T`. Map iteration is
+deterministic inside an isolate.
 
-The isolate adapter requires the default converter. Custom converters and
-protobuf message values remain outside this POC; nil, bytes, and ordinary JSON
-values are supported. Unmarked ordinary Temporal workflows retain their usual
-`workflow.Context` signature and are forwarded through the same worker API.
+Activities, clients, and workers run on the host. Host clients start native
+workflows by their registered string names: the upstream SDK client recognizes
+only `workflow.Context` when validating a function reference. Host payload codecs support
+compression such as `snappycompress` and `codec-server`. Custom native data
+converters use a factory configured with `worker.SetIsolateDataConverter`; `pso`
+shows matching custom serialization on both sides. Application context
+propagation, context-aware serializers, arbitrary protobuf workflow values,
+and external payload storage remain migration gaps; see [MIGRATION.md](./MIGRATION.md).
+Unmarked ordinary SDK workflows retain their usual `workflow.Context` signature
+and are forwarded through the same worker API.
 
 For example, the hello world worker registers `helloworld.HelloWorld`, declared in
 `helloworld/workflow.go`:
@@ -210,8 +214,9 @@ functions with ordinary Go arguments and either no returns, `error`, or
 `(result, error)`. Variadic and generic functions, methods, cgo source, and
 `workflow.Context` arguments are rejected. Build executable workers with
 `go build`; automatic entry generation for `go run`, `go install`, and test
-binaries remains future work. Each sample keeps its workflow and activities in
-the same root package; worker and starter executables remain in subdirectories.
+binaries remains future work. Workflow and activity definitions live in sample packages; worker and starter
+executables remain in subdirectories. Host requesters and initialization use
+separate packages where needed.
 The POC selects package state conservatively and replays selected initializers
 for each instance; workflow-reachable initialization must be suitable for that.
 The pinned host activity SDK graph initializes once in the process. Call its

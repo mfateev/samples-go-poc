@@ -1,0 +1,34 @@
+package main
+
+import (
+	"log"
+
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/contrib/envconfig"
+	"go.temporal.io/sdk/worker"
+
+	"github.com/mfateev/samples-go-poc/saga"
+	isolateworker "github.com/mfateev/sdk-go-poc/worker"
+)
+
+func main() {
+	// Create the client object just once per process
+	c, err := client.Dial(envconfig.MustLoadDefaultClientOptions())
+	if err != nil {
+		log.Fatalln("unable to create Temporal client", err)
+	}
+	defer c.Close()
+	// This worker hosts both Workflow and Activity functions
+	w := isolateworker.New(c, saga.TransferMoneyTaskQueue, worker.Options{})
+	w.RegisterWorkflow(saga.TransferMoney)
+	w.RegisterActivity(saga.Withdraw)
+	w.RegisterActivity(saga.WithdrawCompensation)
+	w.RegisterActivity(saga.Deposit)
+	w.RegisterActivity(saga.DepositCompensation)
+	w.RegisterActivity(saga.StepWithError)
+	// Start listening to the Task Queue
+	err = w.Run(worker.InterruptCh())
+	if err != nil {
+		log.Fatalln("unable to start Worker", err)
+	}
+}

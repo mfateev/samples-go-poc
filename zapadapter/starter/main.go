@@ -1,0 +1,38 @@
+package main
+
+import (
+	"context"
+	"log"
+
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/contrib/envconfig"
+)
+
+func main() {
+	// The client is a heavyweight object that should be created once per process.
+	c, err := client.Dial(envconfig.MustLoadDefaultClientOptions())
+	if err != nil {
+		log.Fatalln("Unable to create client", err)
+	}
+	defer c.Close()
+
+	workflowOptions := client.StartWorkflowOptions{
+		ID:        "zap_logger_workflow_id",
+		TaskQueue: "zap-logger",
+	}
+
+	we, err := c.ExecuteWorkflow(context.Background(), workflowOptions, "Workflow", "<param to log>")
+	if err != nil {
+		log.Fatalln("Unable to execute workflow", err)
+	}
+
+	log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID())
+
+	// Synchronously wait for the workflow completion.
+	var result any
+	err = we.Get(context.Background(), &result)
+	if err != nil {
+		log.Fatalln("Unable get workflow result", err)
+	}
+	log.Println("Workflow completed. Check worker logs.")
+}
