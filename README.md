@@ -1,11 +1,13 @@
 # Temporal Go samples on the isolate POC SDK
 
-This checkout includes **75 of the 83 sample groups** from
+This checkout includes **76 of the 83 sample groups** from
 [Temporal's samples-go at d378442](https://github.com/temporalio/samples-go/tree/d3784428122e0cd4b28e91a0cd86b589749abf28),
 rewritten for native Go workflows in deterministic isolates. See the
-[complete migration inventory](./MIGRATION.md) for every sample, the 8 blocked
+[complete migration inventory](./MIGRATION.md) for every sample, the 7 blocked
 groups and their missing features, verification commands, and deployment limits.
 The existing `goroutines` example is an additional POC example.
+The [dynamic-workflows](./dynamic-workflows/) sample registers one native workflow
+and one host activity as fallbacks for arbitrary runtime names.
 
 Deterministic isolates also support `crypto/rand` and UUID v4 generation. Native
 `select` and top-level random APIs share one replay-seeded stream. These bytes

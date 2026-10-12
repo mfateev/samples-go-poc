@@ -2,7 +2,7 @@
 
 Audited and ported from [temporalio/samples-go at d378442](https://github.com/temporalio/samples-go/tree/d3784428122e0cd4b28e91a0cd86b589749abf28), using SDK v1.49.0 and the isolate SDK workspace checkout.
 
-**75 of 83 upstream sample groups are present.** The other 8 depend on missing native features and are listed below. The existing `goroutines` example is an additional POC example, outside that upstream count. Directory presence describes migration scope, not a claim that cloud services or deployments were exercised.
+**76 of 83 upstream sample groups are present.** The other 7 depend on missing native features and are listed below. The existing `goroutines` example is an additional POC example, outside that upstream count. Directory presence describes migration scope, not a claim that cloud services or deployments were exercised.
 
 ## Native Go patterns
 
@@ -30,16 +30,16 @@ The hello-world development-server test is opt-in:
 
 ```sh
 SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 -v ./helloworld
+SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 -v ./dynamic-workflows
 ```
 
-The opt-in hello-world development-server test has also been run. Tests and compilation do not deploy Cloud Run/Lambda workers or run Datadog/OTel collectors, a production Temporal service, sample UIs, authentication services, or standalone codec/gRPC servers. Those require the infrastructure described in each sample README. Replay suites exercise the checked-in hello-world and rainbow-statuses histories.
+The opt-in hello-world and dynamic-workflows development-server tests have also been run; dynamic workflow histories replay successfully. Tests and compilation do not deploy Cloud Run/Lambda workers or run Datadog/OTel collectors, a production Temporal service, sample UIs, authentication services, or standalone codec/gRPC servers. Those require the infrastructure described in each sample README. Replay suites exercise the checked-in hello-world and rainbow-statuses histories.
 
 ## Blocked samples
 
 | Sample | Missing feature |
 | --- | --- |
 | `ctxpropagation` | Application ContextPropagators across native workflow boundaries. |
-| `dynamic-workflows` | Dynamic native workflow registration and converter.EncodedValues workflow arguments. |
 | `encryption` | Application ContextPropagators and context-aware data conversion inside native workflows. Context-independent host payload codecs are supported. |
 | `external-storage` | External payload storage/reference transport across the native bridge. |
 | `googleadk` | A native context adapter for the contrib Google ADK integration, which uses SDK workflow.Context. |
@@ -67,7 +67,7 @@ Registered native signal channels are filled proactively before application goro
 | [datadog](./datadog/) | Migrated | Native workflow interceptor, host exporter, and Datadog v2 tracer. |
 | [dsl](./dsl/) | Migrated | Native goroutines and a mutex protect shared parallel-branch bindings. |
 | [dynamic](./dynamic/) | Migrated | String-named activities ported; this is distinct from dynamic workflow registration. |
-| `dynamic-workflows` | Blocked | See missing feature above. |
+| [dynamic-workflows](./dynamic-workflows/) | Migrated | Native fallback workflow registration with isolate-owned converter.EncodedValues; dynamic activities and runtime versioning options remain on the host. Unit tests cover runtime names and decoding; the opt-in live test verifies all starter scenarios and history replay. |
 | [dynamicconfig](./dynamicconfig/) | Migrated | Documentation-only upstream sample; retained. |
 | [dynamicmtls](./dynamicmtls/) | Migrated | Native workflow entries and host worker/client APIs. |
 | [eager-workflow-start](./eager-workflow-start/) | Migrated | Native workflow entries and host worker/client APIs. |
