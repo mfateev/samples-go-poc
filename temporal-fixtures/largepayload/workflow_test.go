@@ -1,0 +1,36 @@
+package largepayload
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/mock"
+	"go.temporal.io/sdk/worker"
+
+	"github.com/mfateev/sdk-go-poc/testsuite"
+	"github.com/stretchr/testify/suite"
+)
+
+type UnitTestSuite struct {
+	suite.Suite
+	testsuite.WorkflowTestSuite
+}
+
+func TestUnitTestSuite(t *testing.T) {
+	suite.Run(t, new(UnitTestSuite))
+}
+
+func (s *UnitTestSuite) Test_LargePayloadWorkflow() {
+	env := s.NewTestWorkflowEnvironment(s.T())
+	env.SetWorkerOptions(worker.Options{})
+	var a *Activities
+	env.RegisterActivity(a)
+
+	data := []byte{1, 2, 3, 4}
+	env.OnActivity(a.CreateLargeResultActivity, mock.Anything, 1*1024).Return(data, nil)
+	env.OnActivity(a.ProcessLargeInputActivity, mock.Anything, data).Return(nil)
+
+	env.ExecuteWorkflow(LargePayloadWorkflow, 1*1024)
+
+	s.True(env.IsWorkflowCompleted())
+	s.NoError(env.GetWorkflowError())
+}

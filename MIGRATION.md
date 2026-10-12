@@ -22,15 +22,18 @@ Run from this checkout with sibling `golang-go` and `sdk-go-poc` repositories:
 ../golang-go/bin/go test -p 3 ./... ./codec-server/... ./grpc-proxy/...
 ```
 
-The compiler currently emits isolate entry metadata for built executables rather than ordinary `go test` binaries. `internal/isotest` builds upstream workflow suites in temporary directories and executes their real native workflow definitions against the SDK test environment. Original suites live in `testdata/upstream`; `migration_test.go` launches them. The catalog of native packages makes builds share a consistent compiler cache; regenerate it with `../golang-go/bin/go run ./internal/isotest/cataloggen` after adding an entry package.
+The custom toolchain discovers marked workflow definitions in ordinary source and `_test.go` files. Sample tests import `github.com/mfateev/sdk-go-poc/testsuite` and run directly with `go test`, using the SDK's isolate-aware `TestWorkflowEnvironment`. The previous generated-executable harness, catalog and `migration_test.go` launchers have been removed. Tests live beside their sample source under their original filenames and retain their original suite structure, test names, mock returns and assertions. Pass `t` or `s.T()` to `NewTestWorkflowEnvironment` for automatic cleanup. Marked test builds currently do not support `-cover`.
 
-The adapter supplies stable unit-test session identity and retains completed query state until each test ends, matching the live bridge's cache behavior. Mocked SDK child workflows remain host stubs; child-workflow also includes a native child integration test. Update assertions decode raw results across the isolate boundary. All 54 test files from supported upstream groups are retained, with source changes for native API signatures and payload transport. The full workspace run passes in 52 test packages and compiles another 245 packages without tests. A separate `go build -p 3 ./... ./codec-server/... ./grpc-proxy/...` validates the worker and starter executables with generated isolate metadata.
+The SDK environment supplies stable unit-test session identity and retains completed root and child query state until cleanup. Native workflow mock callbacks run on the host with `context.Context`; `ReturnIsolate` selects a marked replacement when a mock must call workflow APIs. Activity mocks include a context argument where the ported activity's signature requires one. Update assertions use `testsuite.DecodeResult[T]` to decode copied payloads. Every test from the previous sample harness remains present, including the supplemental native child, signal-drain and continuation checks. A separate `go build -p 3 ./... ./codec-server/... ./grpc-proxy/...` validates the worker and starter executables with generated isolate metadata.
 
-The hello-world development-server test is opt-in:
+Register native workflows before configuring SDK workflow mock controls such as search-attribute, memo or external-signal expectations. This follows the host SDK's registration order and replaces the old harness's blanket registration of every marked entry.
+
+Development-server tests are opt-in, including the restored standalone Nexus suites:
 
 ```sh
 SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 -v ./helloworld
 SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 -v ./dynamic-workflows
+SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 -v ./nexus-standalone-activity ./nexus-standalone-operations
 ```
 
 The opt-in hello-world and dynamic-workflows development-server tests have also been run; dynamic workflow histories replay successfully. Tests and compilation do not deploy Cloud Run/Lambda workers or run Datadog/OTel collectors, a production Temporal service, sample UIs, authentication services, or standalone codec/gRPC servers. Those require the infrastructure described in each sample README. Replay suites exercise the checked-in hello-world and rainbow-statuses histories.
