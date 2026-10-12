@@ -5,7 +5,8 @@ This checkout includes **76 of the 83 sample groups** from
 rewritten for native Go workflows in deterministic isolates. See the
 [complete migration inventory](./MIGRATION.md) for every sample, the 7 blocked
 groups and their missing features, verification commands, and deployment limits.
-The existing `goroutines` example is an additional POC example.
+The `goroutines` and [random-streams](./random-streams/) examples are additional
+POC examples. Named random streams separate choices, jitter and audit draws.
 The [dynamic-workflows](./dynamic-workflows/) sample registers one native workflow
 and one host activity as fallbacks for arbitrary runtime names.
 

@@ -2,7 +2,7 @@
 
 Audited and ported from [temporalio/samples-go at d378442](https://github.com/temporalio/samples-go/tree/d3784428122e0cd4b28e91a0cd86b589749abf28), using SDK v1.49.0 and the isolate SDK workspace checkout.
 
-**76 of 83 upstream sample groups are present.** The other 7 depend on missing native features and are listed below. The existing `goroutines` example is an additional POC example, outside that upstream count. Directory presence describes migration scope, not a claim that cloud services or deployments were exercised.
+**76 of 83 upstream sample groups are present.** The other 7 depend on missing native features and are listed below. The `goroutines` and `random-streams` examples are additional POC examples, outside that upstream count. Directory presence describes migration scope, not a claim that cloud services or deployments were exercised.
 
 ## Native Go patterns
 
