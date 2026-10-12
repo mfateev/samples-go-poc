@@ -189,11 +189,11 @@ func main() {
 				check(i.Resume())
 			}
 		case scenario == "canceled":
-			cancellation.Reply(nil, nil)
+			cancellation.Reply(marshal(workflow.WorkflowControl{Canceled: true}), nil)
 			terminal = true
 		default:
 			if scenario == "signal-first" {
-				signal.Reply(marshal(workflow.Signal{Name: "complete"}), nil)
+				signal.Reply(completeSignal(), nil)
 				signal = nil
 				terminal = true
 				continue
@@ -209,7 +209,7 @@ func main() {
 			}
 			if scenario == "pending-email" || round == 2 {
 				// Finish with either the email or the timer still pending.
-				signal.Reply(marshal(workflow.Signal{Name: "complete"}), nil)
+				signal.Reply(completeSignal(), nil)
 				signal = nil
 				terminal = true
 			} else {
@@ -233,6 +233,15 @@ func check(err error) {
 		panic(err)
 	}
 }
+
+func completeSignal() []byte {
+	payloads, err := converter.GetDefaultDataConverter().ToPayloads([]byte(nil))
+	check(err)
+	raw, err := proto.Marshal(payloads)
+	check(err)
+	return marshal(workflow.Signal{Name: "complete", Payloads: raw})
+}
+
 func marshal(value any) []byte {
 	data, err := json.Marshal(value)
 	check(err)
