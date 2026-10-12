@@ -142,6 +142,6 @@ require (
 	gopkg.in/ini.v1 v1.67.1 // indirect
 )
 
-replace go.temporal.io/sdk => github.com/mfateev/temporal-go-sdk v1.49.0-isolates.1
+replace go.temporal.io/sdk => github.com/mfateev/temporal-go-sdk v1.49.0-isolates.1.0.20261012175541-b87b0a1d5dda
 
 replace github.com/cactus/go-statsd-client => github.com/cactus/go-statsd-client/v5 v5.0.0

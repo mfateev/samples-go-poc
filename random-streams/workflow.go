@@ -3,6 +3,7 @@ package random_streams
 import (
 	"context"
 	"errors"
+	"math/rand/v2"
 
 	"github.com/mfateev/sdk-go-poc/workflow"
 )
@@ -24,8 +25,8 @@ func Plan(ctx context.Context, input Input) (Result, error) {
 	if input.Count < 1 || input.Count > 100 || input.AuditDraws < 0 || input.AuditDraws > 1000 {
 		return Result{}, errors.New("count must be 1..100 and audit draws must be 0..1000")
 	}
-	choices := workflow.GetRandomStream(ctx, "choices")
-	jitter := workflow.GetRandomStream(ctx, "jitter")
+	choices := rand.New(workflow.GetRandomStream(ctx, "choices"))
+	jitter := rand.New(workflow.GetRandomStream(ctx, "jitter"))
 	audit := workflow.GetRandomStream(ctx, "audit")
 	for range input.AuditDraws {
 		_ = audit.Uint64()

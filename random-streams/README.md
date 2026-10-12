@@ -1,13 +1,17 @@
 # Named random streams
 
-`workflow.GetRandomStream(ctx, name)` returns a persistent `*math/rand/v2.Rand`
-inside a native workflow. `Plan` uses separate `choices`, `jitter`, and `audit`
+`workflow.GetRandomStream(ctx, name)` returns a persistent `WorkflowRandomStream`
+implementing `math/rand/v2.Source` and `io.Reader`. Wrap it with `rand.New`
+for bounded draws and distributions. `Read` and `Uint64` share a single byte sequence.
+Each source belongs to one native workflow execution. `Plan` uses separate `choices`, `jitter`, and `audit`
 streams. Drawing additional audit values leaves the other streams unchanged.
 Repeated lookup of a name continues its sequence; derived or canceled contexts
 share that execution's stream.
 
-Seeds derive from the original run identity recorded in history and the exact
-stream name. Replay reconstructs the generators through the same workflow calls,
+Seeds and sequences match the upstream Temporal SDK, using the recorded task run
+identity and exact stream name. Reset replays draws before the reset point, then
+reseeds existing handles in place; Continue-As-New creates fresh streams. Replay
+reconstructs the generators through the same workflow calls,
 without recording individual draws. Different executions usually produce different
 results, so compare audit independence within the same execution identity, as the
 unit tests do. Changes to draw order in an existing stream require ordinary
