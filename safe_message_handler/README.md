@@ -13,11 +13,11 @@ To run, first see [README.md](../README.md) for prerequisites.
 Then, run the following from this directory to run the worker:
 
     mkdir -p bin
-    go build -o bin/safe_message_handler-worker safe_message_handler/worker/main.go
+    tgo build -o bin/safe_message_handler-worker safe_message_handler/worker/main.go
     ./bin/safe_message_handler-worker
 
 Then, in another terminal, run the following to execute the workflow:
 
-    go run safe_message_handler/starter/main.go
+    tgo run safe_message_handler/starter/main.go
 
 This will start a worker to run your workflow and activities, then start a ClusterManagerWorkflow and put it through its paces.

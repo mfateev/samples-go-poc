@@ -10,7 +10,7 @@ import (
 
 func TestExclusiveChoiceBehavior(t *testing.T) {
 	binary := filepath.Join(t.TempDir(), "choice-driver")
-	build := exec.Command(filepath.Join(runtime.GOROOT(), "bin", "go"), "build", "-o", binary, "./testdata/driver")
+	build := exec.Command(filepath.Join(runtime.GOROOT(), "bin", "tgo"), "build", "-o", binary, "./testdata/driver")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build driver: %v\n%s", err, output)
 	}

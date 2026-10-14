@@ -8,22 +8,22 @@ causes workflows to get stuck or state is corrupted.
 1) Run the following command to start worker
 ```
 mkdir -p bin
-go build -o bin/recovery-worker recovery/worker/main.go
+tgo build -o bin/recovery-worker recovery/worker/main.go
 ./bin/recovery-worker
 ```
 2) Run the following command to start trip workflow
 ```
-go run recovery/starter/main.go
+tgo run recovery/starter/main.go
 ```
 3) Run the following command to query trip workflow
 ```
-go run recovery/query/main.go
+tgo run recovery/query/main.go
 ```
 4) Run the following command to send signal to trip workflow
 ```
-go run recovery/signal/main.go -s '{"ID": "Trip1", "Total": 10}'
+tgo run recovery/signal/main.go -s '{"ID": "Trip1", "Total": 10}'
 ```
 4) Run the following command to start recovery workflow
 ```
-go run recovery/starter/main.go -w recovery_workflow -wt recoveryworkflow -i '{"Type": "TripWorkflow", "Concurrency": 2}'
+tgo run recovery/starter/main.go -w recovery_workflow -wt recoveryworkflow -i '{"Type": "TripWorkflow", "Concurrency": 2}'
 ```

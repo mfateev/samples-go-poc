@@ -3,10 +3,10 @@
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/greetings-worker greetings/worker/main.go
+tgo build -o bin/greetings-worker greetings/worker/main.go
 ./bin/greetings-worker
 ```
 3) Run the following command to start the example
 ```
-go run greetings/starter/main.go
+tgo run greetings/starter/main.go
 ```

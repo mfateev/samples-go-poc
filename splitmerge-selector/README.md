@@ -9,12 +9,12 @@ sample to see how to process them without Selector in the order of activity invo
 
 ```
 mkdir -p bin
-go build -o bin/splitmerge-selector-worker splitmerge-selector/worker/main.go
+tgo build -o bin/splitmerge-selector-worker splitmerge-selector/worker/main.go
 ./bin/splitmerge-selector-worker
 ```
 
 3) Run the following command to start the example
 
 ```
-go run splitmerge-selector/starter/main.go
+tgo run splitmerge-selector/starter/main.go
 ```

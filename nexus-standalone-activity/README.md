@@ -41,7 +41,7 @@ The starter and worker connect to two different namespaces (a "caller" namespace
 ```bash
 TEMPORAL_NAMESPACE=my-handler-namespace \
   mkdir -p bin
-  go build -o bin/nexus-standalone-activity-worker nexus-standalone-activity/worker/main.go
+  tgo build -o bin/nexus-standalone-activity-worker nexus-standalone-activity/worker/main.go
   ./bin/nexus-standalone-activity-worker
 ```
 
@@ -55,7 +55,7 @@ You should see a log line similar to:
 
 ```bash
 TEMPORAL_NAMESPACE=my-caller-namespace \
-  go run nexus-standalone-activity/starter/main.go
+  tgo run nexus-standalone-activity/starter/main.go
 ```
 
 You should see something similar to:

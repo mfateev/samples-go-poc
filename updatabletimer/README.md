@@ -15,18 +15,18 @@ Demonstrates:
 
 ```
 mkdir -p bin
-go build -o bin/updatabletimer-worker updatabletimer/worker/main.go
+tgo build -o bin/updatabletimer-worker updatabletimer/worker/main.go
 ./bin/updatabletimer-worker
 ```
 
 3) Run the following command to start the example
 
 ```
-go run updatabletimer/starter/main.go
+tgo run updatabletimer/starter/main.go
 ```
 
 4)  Run the following command to update the timer wake-up time
 
 ```
-go run updatabletimer/updater/main.go
+tgo run updatabletimer/updater/main.go
 ```

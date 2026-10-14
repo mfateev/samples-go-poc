@@ -7,10 +7,10 @@ This sample demonstrates how to run multiple activities in parallel based on a d
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/choice-multi-worker choice-multi/worker/main.go
+tgo build -o bin/choice-multi-worker choice-multi/worker/main.go
 ./bin/choice-multi-worker
 ```
 3) Run the following command to start the multi choice workflow
 ```
-go run choice-multi/starter/main.go
+tgo run choice-multi/starter/main.go
 ```

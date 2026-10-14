@@ -6,13 +6,13 @@ From the root of the project, start a Worker:
 
 ```bash
 mkdir -p bin
-go build -o bin/child-workflow-worker child-workflow/worker/main.go
+tgo build -o bin/child-workflow-worker child-workflow/worker/main.go
 ./bin/child-workflow-worker
 ```
 
 Start the Workflow Execution:
 
 ```bash
-go run child-workflow/starter/main.go
+tgo run child-workflow/starter/main.go
 ```
 <!-- @@@SNIPEND -->

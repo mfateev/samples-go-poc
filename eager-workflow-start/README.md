@@ -14,5 +14,5 @@ temporal server start-dev --dynamic-config-value system.enableEagerWorkflowStart
 ```
 2) Run the following command to start the combined worker and example
 ```
-go run eager-workflow-start/main.go
+tgo run eager-workflow-start/main.go
 ```

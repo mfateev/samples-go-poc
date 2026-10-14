@@ -4,7 +4,7 @@
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/helloworld-apiKey-worker ./helloworld-apiKey/worker
+tgo build -o bin/helloworld-apiKey-worker ./helloworld-apiKey/worker
 ./bin/helloworld-apiKey-worker \
     -target-host my.namespace.tmprl.cloud:7233 \
     -namespace my.namespace \
@@ -12,7 +12,7 @@ go build -o bin/helloworld-apiKey-worker ./helloworld-apiKey/worker
 ```
 3) Run the following command to start the example
 ```
-go run ./helloworld-apiKey/starter \
+tgo run ./helloworld-apiKey/starter \
     -target-host my.namespace.tmprl.cloud:7233 \
     -namespace my.namespace \
     -api-key CLIENT_API_KEY

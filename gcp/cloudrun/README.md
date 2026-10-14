@@ -47,7 +47,7 @@ The Cloud Run Id plugin needs the GCP metadata server, so the worker runs on Clo
 deployed, drive it from your machine:
 
 ```bash
-go run ./gcp/cloudrun/starter
+tgo run ./gcp/cloudrun/starter
 ```
 
 This prints `Workflow result: Hello, Cloud Run Worker!`, confirming the deployed worker ran the task.

@@ -13,7 +13,7 @@ In separate terminal windows:
 ```
 cd handler
 mkdir -p bin
-go build -o bin/nexus-multiple-arguments-worker ./worker
+tgo build -o bin/nexus-multiple-arguments-worker ./worker
 ./bin/nexus-multiple-arguments-worker \
     -target-host localhost:7233 \
     -namespace my-target-namespace
@@ -24,7 +24,7 @@ go build -o bin/nexus-multiple-arguments-worker ./worker
 ```
 cd caller
 mkdir -p bin
-go build -o bin/nexus-multiple-arguments-worker ./worker
+tgo build -o bin/nexus-multiple-arguments-worker ./worker
 ./bin/nexus-multiple-arguments-worker \
     -target-host localhost:7233 \
     -namespace my-caller-namespace
@@ -34,7 +34,7 @@ go build -o bin/nexus-multiple-arguments-worker ./worker
 
 ```
 cd caller
-go run ./starter \
+tgo run ./starter \
     -target-host localhost:7233 \
     -namespace my-caller-namespace
 ```

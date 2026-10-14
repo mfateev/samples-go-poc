@@ -26,22 +26,22 @@ With a Temporal server at `localhost:7233`, run from the repository root:
 
 ```sh
 mkdir -p bin
-../golang-go/bin/go build -o bin/random-streams-worker ./random-streams/worker
+../golang-go/bin/tgo build -o bin/random-streams-worker ./random-streams/worker
 ./bin/random-streams-worker
 ```
 
 In another terminal:
 
 ```sh
-../golang-go/bin/go run ./random-streams/starter -count 10 -audit-draws 123
+../golang-go/bin/tgo run ./random-streams/starter -count 10 -audit-draws 123
 ```
 
 Set `TEMPORAL_ADDRESS` in both terminals to use another server. Native worker
 executables must be built with the isolate-aware toolchain.
 
 ```sh
-../golang-go/bin/go test ./random-streams/...
-SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 ./random-streams
+../golang-go/bin/tgo test ./random-streams/...
+SAMPLES_DEV_SERVER=1 ../golang-go/bin/tgo test -count=1 ./random-streams
 ```
 
 The development-server test checks completed queries and compares recorded outputs

@@ -9,18 +9,18 @@ Steps to run this sample:
 2) Run the following command to start worker
 ```
 mkdir -p bin
-go build -o bin/query-worker query/worker/main.go
+tgo build -o bin/query-worker query/worker/main.go
 ./bin/query-worker
 ```
 3) Run the following command to trigger a workflow execution. You should see workflowID and runID print out on screen.
 ```
-go run query/starter/main.go
+tgo run query/starter/main.go
 ```
 4) Run the following command to see current workflow state on the screen.
 ```
-go run query/query/main.go
+tgo run query/query/main.go
 ```
 5) You could also specify the query type "__stack_trace" to dump the call stack for the workflow.
 ```
-go run query/query/main.go -t __stack_trace
+tgo run query/query/main.go -t __stack_trace
 ```

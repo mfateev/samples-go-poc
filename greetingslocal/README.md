@@ -3,10 +3,10 @@
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/greetingslocal-worker greetingslocal/worker/main.go
+tgo build -o bin/greetingslocal-worker greetingslocal/worker/main.go
 ./bin/greetingslocal-worker
 ```
 3) Run the following command to start the example
 ```
-go run greetingslocal/starter/main.go
+tgo run greetingslocal/starter/main.go
 ```

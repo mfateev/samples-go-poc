@@ -24,12 +24,12 @@ Steps to run this sample:
 2) Run the following command multiple times on different console window. This is to simulate running workers on multiple different machines.
 ```
 mkdir -p bin
-go build -o bin/fileprocessing-worker fileprocessing/worker/main.go
+tgo build -o bin/fileprocessing-worker fileprocessing/worker/main.go
 ./bin/fileprocessing-worker
 ```
 3) Run the following command to submit a start request for this fileprocessing workflow.
 ```
-go run fileprocessing/starter/main.go
+tgo run fileprocessing/starter/main.go
 ```
 
 You should see that all activities for one particular workflow execution are scheduled to run on one console window.

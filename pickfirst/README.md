@@ -3,10 +3,10 @@
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/pickfirst-worker pickfirst/worker/main.go
+tgo build -o bin/pickfirst-worker pickfirst/worker/main.go
 ./bin/pickfirst-worker
 ```
 3) Run the following command to start the example
 ```
-go run pickfirst/starter/main.go
+tgo run pickfirst/starter/main.go
 ```

@@ -2,17 +2,17 @@
 1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
 2) Run the following command to start the remote codec server
 ```
-go run ./codec-server
+tgo run ./codec-server
 ```
 3) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/snappycompress-worker worker/main.go
+tgo build -o bin/snappycompress-worker worker/main.go
 ./bin/snappycompress-worker
 ```
 4) Run the following command to start the example
 ```
-go run starter/main.go
+tgo run starter/main.go
 ```
 5) Run the following command and see the payloads cannot be decoded
 ```

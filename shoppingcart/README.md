@@ -26,10 +26,10 @@ temporal server start-dev --dynamic-config-value frontend.enableExecuteMultiOper
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/shoppingcart-worker shoppingcart/worker/main.go
+tgo build -o bin/shoppingcart-worker shoppingcart/worker/main.go
 ./bin/shoppingcart-worker
 ```
 3) Run the following command to start the web app
 ```
-go run shoppingcart/ui/main.go
+tgo run shoppingcart/ui/main.go
 ```

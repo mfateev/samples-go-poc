@@ -16,12 +16,12 @@ The flow of calls is outlined in the diagram below.
 2) Run the following command to start the worker
 ```shell
 mkdir -p bin
-go build -o bin/synchronous-proxy-worker synchronous-proxy/worker/main.go
+tgo build -o bin/synchronous-proxy-worker synchronous-proxy/worker/main.go
 ./bin/synchronous-proxy-worker
 ```
 3) Run the following command to start the simple UI
 ```shell
-go run synchronous-proxy/ui/main.go
+tgo run synchronous-proxy/ui/main.go
 ```
 
 Once the UI has exited you will be able to see delivery details in the worker output, as might have been emailed to you in a real implementation.

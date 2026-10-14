@@ -16,14 +16,14 @@ docker compose -f opentelemetry-v2/docker-compose.yaml up -d
 
 ```bash
 mkdir -p bin
-go build -o bin/opentelemetry-v2-client-update-propagation-worker opentelemetry-v2/client-update-propagation/worker/main.go
+tgo build -o bin/opentelemetry-v2-client-update-propagation-worker opentelemetry-v2/client-update-propagation/worker/main.go
 ./bin/opentelemetry-v2-client-update-propagation-worker
 ```
 
 4. In another terminal, start the Workflow and send the Update:
 
 ```bash
-go run opentelemetry-v2/client-update-propagation/starter/main.go
+tgo run opentelemetry-v2/client-update-propagation/starter/main.go
 ```
 
 5. Inspect the `temporal-otel-v2-custom-client-update-propagation-client`

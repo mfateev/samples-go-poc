@@ -14,12 +14,12 @@ Steps to run this sample:
 2) Run the following command multiple times on different console window. This is to simulate running workers on multiple different machines.
 ```
 mkdir -p bin
-go build -o bin/session-failure-worker session-failure/worker/main.go
+tgo build -o bin/session-failure-worker session-failure/worker/main.go
 ./bin/session-failure-worker
 ```
 1) Run the following command to submit a start request for this session failure workflow.
 ```
-go run session-failure/starter/main.go
+tgo run session-failure/starter/main.go
 ```
 1) If you want to observe the workflow recover from a failed session you can restart
 the worker you launched in step 2).

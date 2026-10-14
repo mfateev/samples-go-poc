@@ -20,10 +20,10 @@ temporal server start-dev --dynamic-config-value frontend.enableExecuteMultiOper
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/early-return-worker early-return/worker/main.go
+tgo build -o bin/early-return-worker early-return/worker/main.go
 ./bin/early-return-worker
 ```
 3) Run the following command to start the example
 ```
-go run early-return/starter/main.go
+tgo run early-return/starter/main.go
 ```

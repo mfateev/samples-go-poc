@@ -3,12 +3,12 @@
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/slogadapter-worker slogadapter/worker/main.go
+tgo build -o bin/slogadapter-worker slogadapter/worker/main.go
 ./bin/slogadapter-worker
 ```
 3) Run the following command to start the example
 ```
-go run slogadapter/starter/main.go
+tgo run slogadapter/starter/main.go
 ```
 4) Check worker logs in colorful JSON format:
 ```json

@@ -17,12 +17,12 @@ and finally releases the lock once processing is over by sending `releaseLock` a
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/mutex-worker mutex/worker/main.go
+tgo build -o bin/mutex-worker mutex/worker/main.go
 ./bin/mutex-worker
 ```
 3) Run the following command to start the example
 ```
-go run mutex/starter/main.go
+tgo run mutex/starter/main.go
 ```
 
 You should see that second workflow critical section is executed when first workflow

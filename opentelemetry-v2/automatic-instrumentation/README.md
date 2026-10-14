@@ -16,7 +16,7 @@ docker compose -f opentelemetry-v2/docker-compose.yaml up -d
 
 ```bash
 mkdir -p bin
-go build -o bin/opentelemetry-v2-automatic-instrumentation-worker opentelemetry-v2/automatic-instrumentation/worker/main.go
+tgo build -o bin/opentelemetry-v2-automatic-instrumentation-worker opentelemetry-v2/automatic-instrumentation/worker/main.go
 ./bin/opentelemetry-v2-automatic-instrumentation-worker
 ```
 

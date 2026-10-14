@@ -47,12 +47,12 @@ clear.
 
 ```
 mkdir -p bin
-go build -o bin/await-signals-worker await-signals/worker/main.go
+tgo build -o bin/await-signals-worker await-signals/worker/main.go
 ./bin/await-signals-worker
 ```
 
 3) Run the following command to start the workflow and send signals in random order
 
 ```
-go run await-signals/starter/main.go
+tgo run await-signals/starter/main.go
 ```

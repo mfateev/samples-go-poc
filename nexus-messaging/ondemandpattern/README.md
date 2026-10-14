@@ -37,7 +37,7 @@ In one terminal, start the handler worker:
 
 ```bash
 mkdir -p bin
-go build -o bin/nexus-messaging-ondemandpattern-handler-worker ./nexus-messaging/ondemandpattern/handler/worker/main.go
+tgo build -o bin/nexus-messaging-ondemandpattern-handler-worker ./nexus-messaging/ondemandpattern/handler/worker/main.go
 ./bin/nexus-messaging-ondemandpattern-handler-worker
 ```
 
@@ -45,14 +45,14 @@ In a second terminal, start the caller worker:
 
 ```bash
 mkdir -p bin
-go build -o bin/nexus-messaging-ondemandpattern-caller-worker ./nexus-messaging/ondemandpattern/caller/worker/main.go
+tgo build -o bin/nexus-messaging-ondemandpattern-caller-worker ./nexus-messaging/ondemandpattern/caller/worker/main.go
 ./bin/nexus-messaging-ondemandpattern-caller-worker
 ```
 
 In a third terminal, run the following command to start the example:
 
 ```bash
-go run ./nexus-messaging/ondemandpattern/caller/starter/main.go
+tgo run ./nexus-messaging/ondemandpattern/caller/starter/main.go
 ```
 
 Expected output:

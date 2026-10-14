@@ -3,12 +3,12 @@
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/zapadapter-worker zapadapter/worker/main.go
+tgo build -o bin/zapadapter-worker zapadapter/worker/main.go
 ./bin/zapadapter-worker
 ```
 3) Run the following command to start the example
 ```
-go run zapadapter/starter/main.go
+tgo run zapadapter/starter/main.go
 ```
 4) Check worker logs in colorful JSON format:
 ```json

@@ -10,14 +10,14 @@ Steps to run this sample:
 2) Run the following command multiple times on different console window. This is to simulate running workers on multiple different machines.
 ```
 mkdir -p bin
-go build -o bin/pso-worker pso/worker/main.go
+tgo build -o bin/pso-worker pso/worker/main.go
 ./bin/pso-worker
 ```
 3) Run the following command to submit a start request for this PSO workflow.
 ```
-go run pso/starter/main.go
+tgo run pso/starter/main.go
 ```
 4) Query the call stack for the workflow with
 ```
-go run pso/query/main.go -w <workflow_id from step 3> -r <run_id from step 3>
+tgo run pso/query/main.go -w <workflow_id from step 3> -r <run_id from step 3>
 ```

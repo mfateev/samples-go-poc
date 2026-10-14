@@ -5,20 +5,20 @@ Steps to run this sample:
 2) Run
 ```
 mkdir -p bin
-go build -o bin/dsl-worker dsl/worker/main.go
+tgo build -o bin/dsl-worker dsl/worker/main.go
 ./bin/dsl-worker
 ```
 to start worker for dsl workflow.
 3) Run
 ```
-go run dsl/starter/main.go
+tgo run dsl/starter/main.go
 ```
 to submit start request for workflow defined in `workflow1.yaml` file.
 
 Next:
 1) You can run
 ```
-go run dsl/starter/main.go -dslConfig=dsl/workflow2.yaml
+tgo run dsl/starter/main.go -dslConfig=dsl/workflow2.yaml
 ```
 to see the result.
 2) You can also write your own yaml config to play with it.

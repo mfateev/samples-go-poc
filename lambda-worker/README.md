@@ -105,5 +105,5 @@ Use the starter program to execute a Workflow on the Lambda worker, using
 the same config file the Lambda uses for connecting to the server:
 
 ```bash
-TEMPORAL_CONFIG_FILE=temporal.toml go run starter/main.go
+TEMPORAL_CONFIG_FILE=temporal.toml tgo run starter/main.go
 ```

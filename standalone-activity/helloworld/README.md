@@ -22,7 +22,7 @@ Temporal Metrics:     http://localhost:57058/metrics
 2) Open a second terminal, and run the following command to start the worker. The worker is a blocking process that runs until it receives a SIGINT (Ctrl + C) command.
 ```bash
 mkdir -p bin
-go build -o bin/standalone-activity-helloworld-worker standalone-activity/helloworld/worker/main.go
+tgo build -o bin/standalone-activity-helloworld-worker standalone-activity/helloworld/worker/main.go
 ./bin/standalone-activity-helloworld-worker
 ```
 
@@ -41,7 +41,7 @@ For example:
 
 3) In a third terminal, run the following command to start the example
 ```bash
-go run standalone-activity/helloworld/starter/main.go
+tgo run standalone-activity/helloworld/starter/main.go
 ```
 
 You should see something similar to the following output.

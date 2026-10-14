@@ -40,7 +40,7 @@ In one terminal, start the handler worker:
 
 ```bash
 mkdir -p bin
-go build -o bin/nexus-messaging-temporal-operation-callerpattern-handler-worker ./nexus-messaging-temporal-operation/callerpattern/handler/worker/main.go
+tgo build -o bin/nexus-messaging-temporal-operation-callerpattern-handler-worker ./nexus-messaging-temporal-operation/callerpattern/handler/worker/main.go
 ./bin/nexus-messaging-temporal-operation-callerpattern-handler-worker
 ```
 
@@ -48,14 +48,14 @@ In a second terminal, start the caller worker:
 
 ```bash
 mkdir -p bin
-go build -o bin/nexus-messaging-temporal-operation-callerpattern-caller-worker ./nexus-messaging-temporal-operation/callerpattern/caller/worker/main.go
+tgo build -o bin/nexus-messaging-temporal-operation-callerpattern-caller-worker ./nexus-messaging-temporal-operation/callerpattern/caller/worker/main.go
 ./bin/nexus-messaging-temporal-operation-callerpattern-caller-worker
 ```
 
 In a third terminal, run the following command to start the example
 
 ```bash
-go run ./nexus-messaging-temporal-operation/callerpattern/caller/starter/main.go
+tgo run ./nexus-messaging-temporal-operation/callerpattern/caller/starter/main.go
 ```
 
 Expected output:

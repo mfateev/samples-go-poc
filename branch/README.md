@@ -10,13 +10,13 @@ From the root of the project, start a Worker:
 
 ```bash
 mkdir -p bin
-go build -o bin/branch-worker branch/worker/main.go
+tgo build -o bin/branch-worker branch/worker/main.go
 ./bin/branch-worker
 ```
 
 Start the Workflow Execution:
 
 ```bash
-go run branch/starter/main.go
+tgo run branch/starter/main.go
 ```
 <!-- @@@SNIPEND -->

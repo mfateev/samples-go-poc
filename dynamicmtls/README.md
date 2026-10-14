@@ -6,12 +6,12 @@ This sample shows how to connect a client to Temporal using mtls where the certi
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/dynamicmtls-worker ./dynamicmtls/worker
+tgo build -o bin/dynamicmtls-worker ./dynamicmtls/worker
 ./bin/dynamicmtls-worker -target-host my.namespace.tmprl.cloud:7233 -namespace my.namespace -client-cert path/to/cert.pem -client-key path/to/key.pem
 ```
 3) Run the following command to start the example
 ```
-go run ./dynamicmtls/starter -target-host my.namespace.tmprl.cloud:7233 -namespace my.namespace -client-cert path/to/cert.pem -client-key path/to/key.pem
+tgo run ./dynamicmtls/starter -target-host my.namespace.tmprl.cloud:7233 -namespace my.namespace -client-cert path/to/cert.pem -client-key path/to/key.pem
 ```
 
 Note:

@@ -13,10 +13,10 @@ The Parent Workflow is not aware about the Child Workflow calling continue-as-ne
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/periodic_sequence-worker periodic_sequence/worker/main.go
+tgo build -o bin/periodic_sequence-worker periodic_sequence/worker/main.go
 ./bin/periodic_sequence-worker
 ```
 3) Run the following command to start the example
 ```
-go run periodic_sequence/starter/main.go
+tgo run periodic_sequence/starter/main.go
 ```

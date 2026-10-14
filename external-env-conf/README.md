@@ -13,12 +13,12 @@ To see a basic use of external env config, see the [hello world sample](./../hel
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/external-env-conf-worker external-env-conf/worker/main.go
+tgo build -o bin/external-env-conf-worker external-env-conf/worker/main.go
 ./bin/external-env-conf-worker
 ```
 3) Run the following command to start the example
 ```
-go run external-env-conf/starter/main.go
+tgo run external-env-conf/starter/main.go
 ```
 
 ### External configuration options

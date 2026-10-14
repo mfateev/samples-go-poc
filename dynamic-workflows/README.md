@@ -21,14 +21,14 @@ build the worker with the modified toolchain and start it:
 
 ```sh
 mkdir -p bin
-../golang-go/bin/go build -o bin/dynamic-workflows-worker ./dynamic-workflows/worker
+../golang-go/bin/tgo build -o bin/dynamic-workflows-worker ./dynamic-workflows/worker
 ./bin/dynamic-workflows-worker
 ```
 
 In another terminal, run the host starter:
 
 ```sh
-../golang-go/bin/go run ./dynamic-workflows/starter
+../golang-go/bin/tgo run ./dynamic-workflows/starter
 ```
 
 The three results are:
@@ -46,6 +46,6 @@ Run the native unit tests, or opt into a development server test that also repla
 the recorded histories:
 
 ```sh
-../golang-go/bin/go test ./dynamic-workflows/...
-SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 ./dynamic-workflows
+../golang-go/bin/tgo test ./dynamic-workflows/...
+SAMPLES_DEV_SERVER=1 ../golang-go/bin/tgo test -count=1 ./dynamic-workflows
 ```

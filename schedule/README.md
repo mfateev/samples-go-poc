@@ -5,12 +5,12 @@ Steps to run this sample:
 2) Run
 ```
 mkdir -p bin
-go build -o bin/schedule-worker schedule/worker/main.go
+tgo build -o bin/schedule-worker schedule/worker/main.go
 ./bin/schedule-worker
 ```
 to start worker for schedule workflow.
 3) Run
 ```
-go run schedule/starter/main.go
+tgo run schedule/starter/main.go
 ```
 to start a schedule to run a workflow every second.

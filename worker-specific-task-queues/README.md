@@ -21,14 +21,14 @@ Activities have been artificially slowed with `time.Sleep(3 * time.Second)` to s
 
 ```bash
 mkdir -p bin
-go build -o bin/worker-specific-task-queues-worker worker-specific-task-queues/worker/main.go
+tgo build -o bin/worker-specific-task-queues-worker worker-specific-task-queues/worker/main.go
 ./bin/worker-specific-task-queues-worker
 ```
 
 Start the Workflow Execution:
 
 ```bash
-go run worker-specific-task-queues/starter/main.go
+tgo run worker-specific-task-queues/starter/main.go
 ```
 
 ### Things to try

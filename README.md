@@ -37,6 +37,14 @@ automatically; no fourth checkout is needed. Compiler, SDK and samples still use
 the branches above. See the [SDK integration contracts](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/README.md#versioned-integration-contracts)
 for version checks and upgrade/rollback validation.
 
+## Go commands
+
+Use standard `go` for ordinary tools such as linters and code generators.
+Use `tgo` to build, test, or run workflow and worker programs: their host code
+and workflows are linked with the same modified Go runtime. Tools that load
+workflow packages need support for the custom toolchain.
+The installed POC command is `bin/tgo`; it does not install a `go` alias.
+
 ## 1. Prepare a Linux or macOS machine
 
 The commands below support ARM64 and x86-64 on Debian or Ubuntu Linux and
@@ -121,16 +129,16 @@ git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates
   https://github.com/mfateev/samples-go-poc.git "$POC_ROOT/samples-go-poc"
 cd "$POC_ROOT/golang-go/src"
 GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
-"$POC_ROOT/golang-go/bin/go" version
-export PATH="$POC_ROOT/golang-go/bin:$PATH"
+"$POC_ROOT/golang-go/bin/tgo" version
+export PATH="$POC_ROOT/golang-go/bin:$POC_ROOT/go/bin:$PATH"
 export GOCACHE="$POC_ROOT/go-build-cache"
 mkdir -p "$GOCACHE"
-"$POC_ROOT/golang-go/bin/go" env GOCACHE
+"$POC_ROOT/golang-go/bin/tgo" env GOCACHE
 cd "$POC_ROOT/samples-go-poc"
-"$POC_ROOT/golang-go/bin/go" env GOWORK
+"$POC_ROOT/golang-go/bin/tgo" env GOWORK
 ```
 
-The `go version` line from the fork ends with `(isolates POC)`.
+The `tgo version` line from the fork ends with `(isolates POC)`.
 
 Go's build cache already accounts for compiler changes, so a separate cache
 is not required for correctness. `make.bash` manages its own bootstrap cache;
@@ -142,7 +150,7 @@ loads this module and `../sdk-go-poc`, so builds use the SDK branch you cloned.
 Go module requirements accept versions rather than branch names; this
 workspace is how these samples consume the branch's checked-out source.
 If you already created a parent workspace using the older instructions, the
-samples' own workspace takes precedence. Use `../golang-go/bin/go` for all
+samples' own workspace takes precedence. Use `../golang-go/bin/tgo` for all
 commands in this module. A system Go toolchain lacks the isolate runtime API
 and marker handling.
 
@@ -166,15 +174,15 @@ used by the workspace; no `go get` or SDK version edit is needed.
 Run from `samples-go-poc` after the previous step:
 
 ```bash
-../golang-go/bin/go mod download
-../golang-go/bin/go test -p 3 ./... ./codec-server/... ./grpc-proxy/...
+../golang-go/bin/tgo mod download
+../golang-go/bin/tgo test -p 3 ./... ./codec-server/... ./grpc-proxy/...
 mkdir -p bin
-../golang-go/bin/go build -o bin/helloworld-worker ./helloworld/worker
-../golang-go/bin/go build -o bin/choice-worker ./choice-exclusive/worker
-../golang-go/bin/go build -o bin/sleep-for-days-worker ./sleep-for-days/worker
-../golang-go/bin/go build -o bin/goroutines-worker ./goroutines/worker
-../golang-go/bin/go build -o bin/goroutines-starter ./goroutines/starter
-../golang-go/bin/go build -o bin/replay ./replay
+../golang-go/bin/tgo build -o bin/helloworld-worker ./helloworld/worker
+../golang-go/bin/tgo build -o bin/choice-worker ./choice-exclusive/worker
+../golang-go/bin/tgo build -o bin/sleep-for-days-worker ./sleep-for-days/worker
+../golang-go/bin/tgo build -o bin/goroutines-worker ./goroutines/worker
+../golang-go/bin/tgo build -o bin/goroutines-starter ./goroutines/starter
+../golang-go/bin/tgo build -o bin/replay ./replay
 ```
 
 Workflow functions carry a `//temporal:workflow` directive. Workers import them and use
@@ -216,7 +224,7 @@ Functions keep their Go signatures. The marker supports concrete top-level
 functions with ordinary Go arguments and either no returns, `error`, or
 `(result, error)`. Variadic and generic functions, methods, cgo source, and
 `workflow.Context` arguments are rejected. Build executable workers with
-`go build`; automatic entry generation for `go run`, `go install`, and test
+`tgo build`; automatic entry generation for `tgo run`, `tgo install`, and test
 binaries remains future work. Workflow and activity definitions live in sample packages; worker and starter
 executables remain in subdirectories. Host requesters and initialization use
 separate packages where needed.
@@ -263,8 +271,8 @@ Once both workers report `Started Worker`, use **Terminal 4** for the starters:
 ```bash
 cd "$HOME/temporal-isolates-poc/samples-go-poc"
 export GOCACHE="$HOME/temporal-isolates-poc/go-build-cache"
-../golang-go/bin/go run ./helloworld/starter Temporal
-../golang-go/bin/go run ./choice-exclusive/starter
+../golang-go/bin/tgo run ./helloworld/starter Temporal
+../golang-go/bin/tgo run ./choice-exclusive/starter
 ```
 
 The first starter prints `Hello Temporal!`; the second prints
@@ -277,7 +285,7 @@ The worker configures an `OrderActivities` instance and registers its native
 methods directly. `ExecuteActivity(ctx, orders.GetOrder).Get(ctx, &choice)`
 reads the choice; `ExecuteActivity(ctx, selected, choice).Get(ctx, nil)` waits
 for the selected error-only activity. Both activity failures
-and unknown choices fail the workflow. `go test ./choice-exclusive` exercises all
+and unknown choices fail the workflow. `tgo test ./choice-exclusive` exercises all
 four branches, both activity failure paths, unknown choices, and configured
 activity choices. `TEMPORAL_ADDRESS` can point the
 workers and starters at another server; the default is `localhost:7233`.
@@ -344,7 +352,7 @@ The SDK's concurrent fixture separately checks firing a native one-second
 timer alongside two activities. Native cross-architecture replay remains a
 release gate.
 
-`go test ./sleep-for-days` enables deterministic dispatch with a direct isolate
+`tgo test ./sleep-for-days` enables deterministic dispatch with a direct isolate
 host to check the no-argument entry, repeated 30-day timers, completion signals,
 both email-first and timer-first completion, no overlapping sends, completion
 signals with either wait pending, propagated immediate and late email failures,
@@ -361,7 +369,7 @@ the Workflow ID printed by the starter:
 
 ```bash
 cd "$HOME/temporal-isolates-poc/samples-go-poc"
-../golang-go/bin/go run ./sleep-for-days/starter
+../golang-go/bin/tgo run ./sleep-for-days/starter
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow signal \
   --workflow-id YOUR_WORKFLOW_ID --name complete
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
@@ -408,7 +416,7 @@ It prints the Workflow ID followed by `Hello Ada!`, `Hello Grace!`, and
 ./bin/replay GreetAll bin/goroutines-history.json
 ```
 
-`../golang-go/bin/go test ./goroutines` checks empty input, concurrent activity
+`../golang-go/bin/tgo test ./goroutines` checks empty input, concurrent activity
 scheduling, completions delivered in reverse order, and activity errors with
 GOMAXPROCS 1, 2, and 8. Live execution and fresh-process replay at those three
 settings passed on Linux ARM64; the replayer also compares the greeting result
@@ -419,7 +427,7 @@ the POC build cache:
 
 ```sh
 GOCACHE="$HOME/temporal-isolates-poc/go-build-cache" \
-  "$HOME/temporal-isolates-poc/golang-go/bin/go" clean -cache
+  "$HOME/temporal-isolates-poc/golang-go/bin/tgo" clean -cache
 ```
 
 ### SDK-compatible activities

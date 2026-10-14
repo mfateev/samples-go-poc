@@ -10,12 +10,12 @@ temporal server start-dev
 2) Run the following command to start the worker
 ```bash
 mkdir -p bin
-go build -o bin/opentelemetry-worker opentelemetry/worker/main.go
+tgo build -o bin/opentelemetry-worker opentelemetry/worker/main.go
 ./bin/opentelemetry-worker
 ```
 3) In another terminal, run the following command to run the workflow
 ```bash
-go run opentelemetry/starter/main.go
+tgo run opentelemetry/starter/main.go
 ```
 
 The example outputs the traces in the stdout, both the worker and the starter.

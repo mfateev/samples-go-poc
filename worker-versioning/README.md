@@ -13,12 +13,12 @@ The sample creates multiple worker versions (1.0, 1.1, and 2.0) within one deplo
 
 2) Start the main application (this will guide you through the sample):
 ```bash
-go run worker-versioning/app/main.go
+tgo run worker-versioning/app/main.go
 ```
 
 3) Follow the prompts to start workers in separate terminals:
-   - When prompted, create the output directory with `mkdir -p bin`, then run: `go build -o bin/workerv1 worker-versioning/workerv1/main.go`, then `./bin/workerv1`
-   - When prompted, create the output directory with `mkdir -p bin`, then run: `go build -o bin/workerv1.1 worker-versioning/workerv1.1/main.go`, then `./bin/workerv1.1`
-   - When prompted, create the output directory with `mkdir -p bin`, then run: `go build -o bin/workerv2 worker-versioning/workerv2/main.go`, then `./bin/workerv2`
+   - When prompted, create the output directory with `mkdir -p bin`, then run: `tgo build -o bin/workerv1 worker-versioning/workerv1/main.go`, then `./bin/workerv1`
+   - When prompted, create the output directory with `mkdir -p bin`, then run: `tgo build -o bin/workerv1.1 worker-versioning/workerv1.1/main.go`, then `./bin/workerv1.1`
+   - When prompted, create the output directory with `mkdir -p bin`, then run: `tgo build -o bin/workerv2 worker-versioning/workerv2/main.go`, then `./bin/workerv2`
 
 The sample will show how auto-upgrading workflows migrate to newer workers while pinned workflows remain on their original version.

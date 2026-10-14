@@ -10,17 +10,17 @@ cd grpc-proxy
 ```
 3) Run the following command to start the GRPC proxy listening on port 8081
 ```
-go run ./proxy-server
+tgo run ./proxy-server
 ```
 4) Run the following command to start the worker. The worker is configured to connect to the proxy.
 ```
 mkdir -p bin
-go build -o bin/grpc-proxy-worker ./worker
+tgo build -o bin/grpc-proxy-worker ./worker
 ./bin/grpc-proxy-worker
 ```
 5) Run the following command to start the example. The client the starter uses is configured to connect to the proxy.
 ```
-go run ./starter
+tgo run ./starter
 ```
 6) Run the following command and see that when Temporal CLI is connected directly to Temporal it cannot display the payloads as they are encoded (compressed)
 ```

@@ -10,7 +10,7 @@ Workflow entries use `//temporal:workflow` and `context.Context`. Workflow concu
 
 `workflow.GetSignalChannel[T]` returns `<-chan T`. Native futures can be waited on with `Get` or selected through `ToChannel`. `workflow.WaitHandlersFinished(ctx)` waits until accepted update completions have reached the host; samples use it before returning or continuing as new. Application signal goroutines must be coordinated separately. Signals are proactively decoded into native channels before application code resumes, including signals queued before channel registration.
 
-Build workflow workers with the modified toolchain's `go build` and run the resulting executables; `go run` does not emit isolate entry metadata. Host starters can use `go run`. The root setup instructions put the modified compiler on `PATH` for individual sample commands. Workers use the POC `worker.New`. Host clients start native workflows by their registered string names: the upstream SDK client recognizes only `workflow.Context` when validating a function reference. Host activities, clients, codecs, server integrations, and SDK worker options retain the upstream SDK APIs. Native interceptor and serializer factories are configured explicitly. Host-only logging/telemetry/codec initialization lives in separate packages where necessary.
+Build workflow workers with the modified toolchain's `tgo build` and run the resulting executables; `tgo run` does not emit isolate entry metadata. Host starters can use `tgo run`. The root setup instructions put the modified compiler on `PATH` for individual sample commands. Workers use the POC `worker.New`. Host clients start native workflows by their registered string names: the upstream SDK client recognizes only `workflow.Context` when validating a function reference. Host activities, clients, codecs, server integrations, and SDK worker options retain the upstream SDK APIs. Native interceptor and serializer factories are configured explicitly. Host-only logging/telemetry/codec initialization lives in separate packages where necessary.
 
 The ports target new executions. Replacing SDK coroutines, side-effect markers, timers, or child-ID generation can change command histories. Existing histories need explicit replay/version migration validation; this catalog does not claim general compatibility with every upstream history.
 
@@ -19,21 +19,21 @@ The ports target new executions. Replacing SDK coroutines, side-effect markers, 
 Run from this checkout with sibling `golang-go` and `sdk-go-poc` repositories:
 
 ```sh
-../golang-go/bin/go test -p 3 ./... ./codec-server/... ./grpc-proxy/...
+../golang-go/bin/tgo test -p 3 ./... ./codec-server/... ./grpc-proxy/...
 ```
 
-The custom toolchain discovers marked workflow definitions in ordinary source and `_test.go` files. Sample tests import `github.com/mfateev/sdk-go-poc/testsuite` and run directly with `go test`, using the SDK's isolate-aware `TestWorkflowEnvironment`. The previous generated-executable harness, catalog and `migration_test.go` launchers have been removed. Tests live beside their sample source under their original filenames and retain their original suite structure, test names, mock returns and assertions. Pass `t` or `s.T()` to `NewTestWorkflowEnvironment` for automatic cleanup. Marked test builds currently do not support `-cover`.
+The custom toolchain discovers marked workflow definitions in ordinary source and `_test.go` files. Sample tests import `github.com/mfateev/sdk-go-poc/testsuite` and run directly with `tgo test`, using the SDK's isolate-aware `TestWorkflowEnvironment`. The previous generated-executable harness, catalog and `migration_test.go` launchers have been removed. Tests live beside their sample source under their original filenames and retain their original suite structure, test names, mock returns and assertions. Pass `t` or `s.T()` to `NewTestWorkflowEnvironment` for automatic cleanup. Marked test builds currently do not support `-cover`.
 
-The SDK environment supplies stable unit-test session identity and retains completed root and child query state until cleanup. Native workflow mock callbacks run on the host with `context.Context`; `ReturnIsolate` selects a marked replacement when a mock must call workflow APIs. Activity mocks include a context argument where the ported activity's signature requires one. Update assertions use `testsuite.DecodeResult[T]` to decode copied payloads. Every test from the previous sample harness remains present, including the supplemental native child, signal-drain and continuation checks. A separate `go build -p 3 ./... ./codec-server/... ./grpc-proxy/...` validates the worker and starter executables with generated isolate metadata.
+The SDK environment supplies stable unit-test session identity and retains completed root and child query state until cleanup. Native workflow mock callbacks run on the host with `context.Context`; `ReturnIsolate` selects a marked replacement when a mock must call workflow APIs. Activity mocks include a context argument where the ported activity's signature requires one. Update assertions use `testsuite.DecodeResult[T]` to decode copied payloads. Every test from the previous sample harness remains present, including the supplemental native child, signal-drain and continuation checks. A separate `tgo build -p 3 ./... ./codec-server/... ./grpc-proxy/...` validates the worker and starter executables with generated isolate metadata.
 
 Register native workflows before configuring SDK workflow mock controls such as search-attribute, memo or external-signal expectations. This follows the host SDK's registration order and replaces the old harness's blanket registration of every marked entry.
 
 Development-server tests are opt-in, including the restored standalone Nexus suites:
 
 ```sh
-SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 -v ./helloworld
-SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 -v ./dynamic-workflows
-SAMPLES_DEV_SERVER=1 ../golang-go/bin/go test -count=1 -v ./nexus-standalone-activity ./nexus-standalone-operations
+SAMPLES_DEV_SERVER=1 ../golang-go/bin/tgo test -count=1 -v ./helloworld
+SAMPLES_DEV_SERVER=1 ../golang-go/bin/tgo test -count=1 -v ./dynamic-workflows
+SAMPLES_DEV_SERVER=1 ../golang-go/bin/tgo test -count=1 -v ./nexus-standalone-activity ./nexus-standalone-operations
 ```
 
 The opt-in hello-world and dynamic-workflows development-server tests have also been run; dynamic workflow histories replay successfully. Tests and compilation do not deploy Cloud Run/Lambda workers or run Datadog/OTel collectors, a production Temporal service, sample UIs, authentication services, or standalone codec/gRPC servers. Those require the infrastructure described in each sample README. Replay suites exercise the checked-in hello-world and rainbow-statuses histories.

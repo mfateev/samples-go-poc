@@ -13,12 +13,12 @@ To see more information on goroutines and multithreading, see our
 
 ```
 mkdir -p bin
-go build -o bin/goroutine-worker goroutine/worker/main.go
+tgo build -o bin/goroutine-worker goroutine/worker/main.go
 ./bin/goroutine-worker
 ```
 
 3) Run the following command to start the example
 
 ```
-go run goroutine/starter/main.go
+tgo run goroutine/starter/main.go
 ```

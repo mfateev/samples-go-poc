@@ -9,12 +9,12 @@ to see how to process them in the order of activity completion instead.
 
 ```
 mkdir -p bin
-go build -o bin/splitmerge-future-worker splitmerge-future/worker/main.go
+tgo build -o bin/splitmerge-future-worker splitmerge-future/worker/main.go
 ./bin/splitmerge-future-worker
 ```
 
 3) Run the following command to start the example
 
 ```
-go run splitmerge-future/starter/main.go
+tgo run splitmerge-future/starter/main.go
 ```

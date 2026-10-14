@@ -8,12 +8,12 @@ the logger.
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/logger-interceptor-worker ./logger-interceptor/worker
+tgo build -o bin/logger-interceptor-worker ./logger-interceptor/worker
 ./bin/logger-interceptor-worker
 ```
 3) Run the following command to start the example
 ```
-go run ./logger-interceptor/starter
+tgo run ./logger-interceptor/starter
 ```
 
 Notice the log output has the `WorkflowStartTime`/`ActivityStartTime` tags on the logs.

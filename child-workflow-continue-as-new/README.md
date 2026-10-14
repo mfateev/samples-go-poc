@@ -12,13 +12,13 @@ Start the Worker:
 
 ```bash
 mkdir -p bin
-go build -o bin/child-workflow-continue-as-new-worker child-workflow-continue-as-new/worker/main.go
+tgo build -o bin/child-workflow-continue-as-new-worker child-workflow-continue-as-new/worker/main.go
 ./bin/child-workflow-continue-as-new-worker
 ```
 
 Start the Parent Workflow Execution:
 
 ```bash
-go run child-workflow-continue-as-new/starter/main.go
+tgo run child-workflow-continue-as-new/starter/main.go
 ```
 <!-- @@@SNIPEND -->

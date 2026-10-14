@@ -20,17 +20,17 @@ Get a Temporal service running [here](https://github.com/temporalio/samples-go/t
 * You need a Temporal service running. README.md for more details.
 * Start the sample expense system UI
 ```
-go run expense/ui/main.go
+tgo run expense/ui/main.go
 ```
 * Start workflow and activity workers
 ```
 mkdir -p bin
-go build -o bin/expense-worker expense/worker/main.go
+tgo build -o bin/expense-worker expense/worker/main.go
 ./bin/expense-worker
 ```
 * Start expanse workflow execution
 ```
-go run expense/starter/main.go
+tgo run expense/starter/main.go
 ```
 * When you see the console print out the expense is created, go to [localhost:8099/list](http://localhost:8099/list)
 to approve the expense.

@@ -12,7 +12,7 @@ import (
 // are checked without waiting for wall-clock time on a real server.
 func TestSleepForDaysBehavior(t *testing.T) {
 	binary := filepath.Join(t.TempDir(), "sleep-for-days-driver")
-	goTool := filepath.Join(runtime.GOROOT(), "bin", "go")
+	goTool := filepath.Join(runtime.GOROOT(), "bin", "tgo")
 	build := exec.Command(goTool, "build", "-o", binary, "./testdata/driver")
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build driver: %v\n%s", err, output)

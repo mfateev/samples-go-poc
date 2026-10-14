@@ -3,10 +3,10 @@
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/timer-worker timer/worker/main.go
+tgo build -o bin/timer-worker timer/worker/main.go
 ./bin/timer-worker
 ```
 3) Run the following command to start the example
 ```
-go run timer/starter/main.go
+tgo run timer/starter/main.go
 ```

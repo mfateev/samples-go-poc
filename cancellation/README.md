@@ -6,19 +6,19 @@ From the root of the project, start a Worker:
 
 ```bash
 mkdir -p bin
-go build -o bin/cancellation-worker cancellation/worker/main.go
+tgo build -o bin/cancellation-worker cancellation/worker/main.go
 ./bin/cancellation-worker
 ```
 
 Start the Workflow Execution:
 
 ```bash
-go run cancellation/starter/main.go
+tgo run cancellation/starter/main.go
 ```
 
 Cancel the Workflow Execution:
 
 ```bash
-go run cancellation/cancel/main.go
+tgo run cancellation/cancel/main.go
 ```
 <!-- @@@SNIPEND -->

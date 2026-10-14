@@ -36,9 +36,9 @@ https://docs.datadoghq.com/logs/log_collection/go/
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/datadog-worker datadog/worker/main.go
+tgo build -o bin/datadog-worker datadog/worker/main.go
 ./bin/datadog-worker
 ```
 3) Run the following command to start the example
 ```
-go run datadog/starter/main.go
+tgo run datadog/starter/main.go

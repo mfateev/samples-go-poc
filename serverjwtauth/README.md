@@ -20,7 +20,7 @@ outside the scope of this example.
 First, the public keys must be served for reading by the server. Run the following in a separate terminal to generate a
 private key and serve its public key:
 
-    go run ./serverjwtauth/key gen-and-serve
+    tgo run ./serverjwtauth/key gen-and-serve
 
 This will output a line like:
 
@@ -71,7 +71,7 @@ To create this manually, we will use the `Temporal CLI`.
 We must set the `TEMPORAL_CLI_AUTH` environment variable with an authorization header value that includes
 the JWT key. The following command generates a 1 hour key with `admin` permissions on the `system` namespace:
 
-    go run ./serverjwtauth/key cli-system-token
+    tgo run ./serverjwtauth/key cli-system-token
 
 This will output something like:
 
@@ -80,11 +80,11 @@ This will output something like:
 See [this documentation](https://docs.temporal.io/cli#environment-variables) on how to run the `Temporal CLI` with environment
 variables. If using the docker approach from bash, an argument could be added like:
 
-    --env "$(go run ./serverjwtauth/key cli-system-token)"
+    --env "$(tgo run ./serverjwtauth/key cli-system-token)"
 
 Or if using `Temporal CLI` standalone from bash, an `export` for the environment can be added:
 
-    export "$(go run ./serverjwtauth/key cli-system-token)"
+    export "$(tgo run ./serverjwtauth/key cli-system-token)"
 
 Once `Temporal CLI` is set to take an environment variable, it can be run to create the `default` namespace:
 
@@ -96,12 +96,12 @@ Now with the server running with authorization enabled and the namespace present
 background or a separate terminal:
 
     mkdir -p bin
-    go build -o bin/serverjwtauth-worker ./serverjwtauth/worker
+    tgo build -o bin/serverjwtauth-worker ./serverjwtauth/worker
     ./bin/serverjwtauth-worker
 
 With the worker started, we can run a workflow:
 
-    go run ./serverjwtauth/starter
+    tgo run ./serverjwtauth/starter
 
 This will output:
 

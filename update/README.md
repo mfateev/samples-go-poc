@@ -11,10 +11,10 @@ thus will not be included in the workflow history.
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/update-worker update/worker/main.go
+tgo build -o bin/update-worker update/worker/main.go
 ./bin/update-worker
 ```
 3) Run the following command to start the example
 ```
-go run update/starter/main.go
+tgo run update/starter/main.go
 ```

@@ -8,12 +8,12 @@ Steps to run this sample:
 2) Run
 ```
 mkdir -p bin
-go build -o bin/cron-worker cron/worker/main.go
+tgo build -o bin/cron-worker cron/worker/main.go
 ./bin/cron-worker
 ```
 to start worker for cron workflow.
 3) Run
 ```
-go run cron/starter/main.go
+tgo run cron/starter/main.go
 ```
 to start workflow with cron expression scheduled to run every minute.

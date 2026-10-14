@@ -20,12 +20,12 @@ From the root of the project, start a Worker:
 
 ```bash
 mkdir -p bin
-go build -o bin/batch-sliding-window-worker batch-sliding-window/worker/main.go
+tgo build -o bin/batch-sliding-window-worker batch-sliding-window/worker/main.go
 ./bin/batch-sliding-window-worker
 ```
 
 Start the Workflow Execution:
 
 ```bash
-go run batch-sliding-window/starter/main.go
+tgo run batch-sliding-window/starter/main.go
 ```

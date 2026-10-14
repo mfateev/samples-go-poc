@@ -16,14 +16,14 @@
 
   ```
   mkdir -p bin
-  go build -o bin/searchattributes-worker searchattributes/worker/main.go
+  tgo build -o bin/searchattributes-worker searchattributes/worker/main.go
   ./bin/searchattributes-worker
   ```
 
 1. Run the following command to start the example:
 
   ```
-  go run searchattributes/starter/main.go
+  tgo run searchattributes/starter/main.go
   ```
 
 1. Observe search attributes in the worker log:

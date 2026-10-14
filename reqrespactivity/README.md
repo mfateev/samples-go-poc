@@ -14,16 +14,16 @@ Follow the below steps to run this sample:
 2) Run the following command in the background or in another terminal to run the worker:
 
     mkdir -p bin
-    go build -o bin/reqrespactivity-worker ./reqrespactivity/worker
+    tgo build -o bin/reqrespactivity-worker ./reqrespactivity/worker
     ./bin/reqrespactivity-worker
 
 3) Run the following command to start the workflow:
 
-    go run ./reqrespactivity/starter
+    tgo run ./reqrespactivity/starter
 
 4) Run the following command to uppercase a string every second:
 
-    go run ./reqrespactivity/request
+    tgo run ./reqrespactivity/request
 
 Multiple of those can be run on different terminals to confirm that the processes are independent.
 

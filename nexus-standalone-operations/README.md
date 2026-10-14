@@ -29,7 +29,7 @@ The starter and worker connect to two different namespaces (a "caller" namespace
 ```bash
 TEMPORAL_NAMESPACE=my-handler-namespace \
   mkdir -p bin
-  go build -o bin/nexus-standalone-operations-worker nexus-standalone-operations/worker/main.go
+  tgo build -o bin/nexus-standalone-operations-worker nexus-standalone-operations/worker/main.go
   ./bin/nexus-standalone-operations-worker
 ```
 
@@ -43,7 +43,7 @@ You should see a log line similar to:
 
 ```bash
 TEMPORAL_NAMESPACE=my-caller-namespace \
-  go run nexus-standalone-operations/starter/main.go
+  tgo run nexus-standalone-operations/starter/main.go
 ```
 
 You should see something similar to:
@@ -93,12 +93,12 @@ For mTLS instead of API keys, set `tls.client_cert_path` and `tls.client_key_pat
 # terminal 1 (worker, handler namespace)
 export TEMPORAL_PROFILE="handler"
 mkdir -p bin
-go build -o bin/nexus-standalone-operations-worker nexus-standalone-operations/worker/main.go
+tgo build -o bin/nexus-standalone-operations-worker nexus-standalone-operations/worker/main.go
 ./bin/nexus-standalone-operations-worker
 ```
 
 ```bash
 # terminal 2 (starter, caller namespace)
 export TEMPORAL_PROFILE="caller"
-go run nexus-standalone-operations/starter/main.go
+tgo run nexus-standalone-operations/starter/main.go
 ```

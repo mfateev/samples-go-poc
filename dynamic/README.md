@@ -8,10 +8,10 @@ rather than strongly typed function.
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-go build -o bin/dynamic-worker dynamic/worker/main.go
+tgo build -o bin/dynamic-worker dynamic/worker/main.go
 ./bin/dynamic-worker
 ```
 3) Run the following command to start the example
 ```
-go run dynamic/starter/main.go
+tgo run dynamic/starter/main.go
 ```
