@@ -13,7 +13,7 @@ const (
 	Done        = "done"
 )
 
-//go:isolate
+//temporal:workflow
 func Counter(ctx context.Context) (int, error) {
 	log := workflow.GetLogger(ctx)
 	counter := 0

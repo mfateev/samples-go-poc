@@ -33,7 +33,7 @@ const (
 // It waits on a TripEvent signal and increments a counter on each signal received by this workflow
 // Trip count is managed as workflow state and passed to new run after 10 signals received by each execution
 //
-//go:isolate
+//temporal:workflow
 func TripWorkflow(ctx context.Context, state UserState) error {
 	logger := workflow.GetLogger(ctx)
 	workflowID := workflow.GetInfo(ctx).WorkflowExecution.ID

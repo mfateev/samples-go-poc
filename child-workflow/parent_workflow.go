@@ -12,7 +12,7 @@ import (
 // Each Child Workflow Execution starts a new Run.
 // The Parent Workflow Execution is notified only after the completion of last Run of the Child Workflow Execution.
 //
-//go:isolate
+//temporal:workflow
 func SampleParentWorkflow(ctx context.Context) (string, error) {
 	logger := workflow.GetLogger(ctx)
 

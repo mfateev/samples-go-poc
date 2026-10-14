@@ -149,7 +149,7 @@ func (dc *jsonDataConverter) ToStrings(_ *commonpb.Payloads) []string {
 
 // NewIsolateDataConverter configures the same encoding inside the native workflow.
 //
-//go:isolate
+//temporal:workflow
 func NewIsolateDataConverter([]byte) (converter.DataConverter, error) {
 	return NewJSONDataConverter(), nil
 }

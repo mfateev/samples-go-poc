@@ -11,7 +11,7 @@ import (
 // @@@SNIPSTART samples-go-cw-cas-parent-workflow-definition
 // SampleParentWorkflow is a Workflow Definition
 //
-//go:isolate
+//temporal:workflow
 func SampleParentWorkflow(ctx context.Context) error {
 	logger := workflow.GetLogger(ctx)
 	execution := workflow.GetInfo(ctx).WorkflowExecution

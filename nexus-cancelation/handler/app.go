@@ -22,7 +22,7 @@ var HelloOperation = temporalnexus.MustNewWorkflowRunOperationWithOptions(tempor
 	return temporalnexus.ExecuteUntypedWorkflow[service.HelloOutput](ctx, options, client.StartWorkflowOptions{ID: service.HelloWorkflowID(input)}, "HelloHandlerWorkflow", input)
 }})
 
-//go:isolate
+//temporal:workflow
 func HelloHandlerWorkflow(ctx context.Context, input service.HelloInput) (service.HelloOutput, error) {
 	// Sleep for a random duration to simulate some work
 	duration := time.Duration(rand.IntN(5)) * time.Second

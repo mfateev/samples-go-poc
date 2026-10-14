@@ -32,7 +32,7 @@ const ContinueAsNewStr = "CONTINUEASNEW"
 
 // PSOWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func PSOWorkflow(ctx context.Context, functionName string) (string, error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info(fmt.Sprintf("Optimizing function %s", functionName))
@@ -97,7 +97,7 @@ func PSOWorkflow(ctx context.Context, functionName string) (string, error) {
 // PSOChildWorkflow workflow definition
 // Returns true if the optimization has converged
 //
-//go:isolate
+//temporal:workflow
 func PSOChildWorkflow(ctx context.Context, swarm Swarm, startingStep int) (WorkflowResult, error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("Child workflow execution started.")

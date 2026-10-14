@@ -13,7 +13,7 @@ const (
 	endpointName = "my-nexus-endpoint-name"
 )
 
-//go:isolate
+//temporal:workflow
 func EchoCallerWorkflow(ctx context.Context, message string) (string, error) {
 	c := workflow.NewNexusClient(endpointName, service.HelloServiceName)
 
@@ -27,7 +27,7 @@ func EchoCallerWorkflow(ctx context.Context, message string) (string, error) {
 	return res.Message, nil
 }
 
-//go:isolate
+//temporal:workflow
 func HelloCallerWorkflow(ctx context.Context, name string, language service.Language) (string, error) {
 	c := workflow.NewNexusClient(endpointName, service.HelloServiceName)
 

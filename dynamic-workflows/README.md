@@ -3,7 +3,7 @@
 Adapted from [Temporal's Go sample at d378442](https://github.com/temporalio/samples-go/tree/d3784428122e0cd4b28e91a0cd86b589749abf28/dynamic-workflows).
 
 A single `DynamicWorkflow` handles workflow types that have no named registration.
-It uses `context.Context`, is marked `//go:isolate`, and decodes its arguments from
+It uses `context.Context`, is marked `//temporal:workflow`, and decodes its arguments from
 `converter.EncodedValues` inside the isolate. The requested type is available as
 `workflow.GetInfo(ctx).WorkflowType.Name`.
 

@@ -71,7 +71,7 @@ var (
 
 // RecoverWorkflow is the workflow implementation to recover TripWorkflow executions
 //
-//go:isolate
+//temporal:workflow
 func RecoverWorkflow(ctx context.Context, params Params) error {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("Recover workflow started.")

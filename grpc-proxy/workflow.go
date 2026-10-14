@@ -12,7 +12,7 @@ import (
 // Note that the Workflow and Activity don't need to care that
 // their inputs/results are being compressed.
 //
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, name string) (string, error) {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,

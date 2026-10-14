@@ -10,7 +10,7 @@ import (
 
 // RecordProcessorWorkflow workflow that implements processing of a single record.
 //
-//go:isolate
+//temporal:workflow
 func RecordProcessorWorkflow(ctx context.Context, r SingleRecord) error {
 	err := ProcessRecord(ctx, r)
 	// Notify parent about completion via signal

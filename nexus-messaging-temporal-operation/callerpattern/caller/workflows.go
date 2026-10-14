@@ -18,7 +18,7 @@ const (
 // CallerWorkflow calls the NexusGreetingService operations for a given userID
 // and returns a log of actions taken.
 //
-//go:isolate
+//temporal:workflow
 func CallerWorkflow(ctx context.Context, userID string) ([]string, error) {
 	var log []string
 	c := workflow.NewNexusClient(endpointName, service.ServiceName)

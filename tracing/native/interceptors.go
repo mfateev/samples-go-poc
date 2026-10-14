@@ -11,7 +11,7 @@ import (
 
 const SinkOp uint32 = 1000
 
-//go:isolate
+//temporal:workflow
 func NewInterceptors(config []byte) ([]interceptor.WorkerInterceptor, error) {
 	switch string(config) {
 	case "datadog":

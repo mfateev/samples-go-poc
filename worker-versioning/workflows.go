@@ -16,7 +16,7 @@ import (
 // same code over time - but really what we're demonstrating here is the evolution of what would
 // have been one workflow definition.
 //
-//go:isolate
+//temporal:workflow
 func AutoUpgradingWorkflowV1(ctx context.Context) error {
 	workflow.GetLogger(ctx).Info("Changing workflow v1 started.", "StartTime", time.Now())
 
@@ -60,7 +60,7 @@ func AutoUpgradingWorkflowV1(ctx context.Context) error {
 //   - Using the workflow.GetVersion API to properly introduce branching behavior while maintaining
 //     compatibility
 //
-//go:isolate
+//temporal:workflow
 func AutoUpgradingWorkflowV1b(ctx context.Context) error {
 	workflow.GetLogger(ctx).Info("Changing workflow v1b started.", "StartTime", time.Now())
 
@@ -124,7 +124,7 @@ func AutoUpgradingWorkflowV1b(ctx context.Context) error {
 // same code over time - but really what we're demonstrating here is the evolution of what would
 // have been one workflow definition.
 //
-//go:isolate
+//temporal:workflow
 func PinnedWorkflowV1(ctx context.Context) error {
 	workflow.GetLogger(ctx).Info("Pinned Workflow v1 started.", "StartTime", time.Now())
 
@@ -159,7 +159,7 @@ func PinnedWorkflowV1(ctx context.Context) error {
 // PinnedWorkflowV2 has changes that would make it incompatible with v1, and aren't protected by
 // a patch.
 //
-//go:isolate
+//temporal:workflow
 func PinnedWorkflowV2(ctx context.Context) error {
 	workflow.GetLogger(ctx).Info("Pinned Workflow v1 started.", "StartTime", time.Now())
 

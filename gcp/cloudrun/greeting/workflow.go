@@ -10,7 +10,7 @@ import (
 
 // SampleWorkflow executes a single greeting activity.
 //
-//go:isolate
+//temporal:workflow
 func SampleWorkflow(ctx context.Context, name string) (string, error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("SampleWorkflow started", "name", name)

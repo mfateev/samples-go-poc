@@ -16,7 +16,7 @@ import (
 
 // SamplePickFirstWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SamplePickFirstWorkflow(ctx context.Context) (string, error) {
 	callCtx, cancel := context.WithCancel(ctx)
 	defer cancel()

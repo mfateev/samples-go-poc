@@ -12,7 +12,7 @@ import (
 
 // RainbowStatusesWorkflow workflow definition.
 //
-//go:isolate
+//temporal:workflow
 func RainbowStatusesWorkflow(ctx context.Context, status enums.WorkflowExecutionStatus) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 1 * time.Hour,

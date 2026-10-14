@@ -11,7 +11,7 @@ import (
 // @@@SNIPSTART samples-go-cancellation-workflow-definition
 // YourWorkflow is a Workflow Definition that shows how it can be canceled.
 //
-//go:isolate
+//temporal:workflow
 func YourWorkflow(ctx context.Context) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 30 * time.Minute,

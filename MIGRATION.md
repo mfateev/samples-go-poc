@@ -6,7 +6,7 @@ Audited and ported from [temporalio/samples-go at d378442](https://github.com/te
 
 ## Native Go patterns
 
-Workflow entries use `//go:isolate` and `context.Context`. Workflow concurrency uses ordinary `go`, channels, `select`, `sync.Mutex`, and `sync.WaitGroup`. Timers use `time.Timer`, `time.After`, or context-aware timer waits; time and randomness are replay deterministic in isolates. Map iteration is deterministic and requires no workflow-checker suppression or sorted-key helper.
+Workflow entries use `//temporal:workflow` and `context.Context`. Workflow concurrency uses ordinary `go`, channels, `select`, `sync.Mutex`, and `sync.WaitGroup`. Timers use `time.Timer`, `time.After`, or context-aware timer waits; time and randomness are replay deterministic in isolates. Map iteration is deterministic and requires no workflow-checker suppression or sorted-key helper.
 
 `workflow.GetSignalChannel[T]` returns `<-chan T`. Native futures can be waited on with `Get` or selected through `ToChannel`. `workflow.WaitHandlersFinished(ctx)` waits until accepted update completions have reached the host; samples use it before returning or continuing as new. Application signal goroutines must be coordinated separately. Signals are proactively decoded into native channels before application code resumes, including signals queued before channel registration.
 

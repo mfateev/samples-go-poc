@@ -18,7 +18,7 @@ type greetingResult struct {
 // GreetAll starts one activity per name concurrently. Results retain input
 // order even when Temporal delivers activity completions in a different order.
 //
-//go:isolate
+//temporal:workflow
 func GreetAll(ctx context.Context, names []string) ([]string, error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
 	results := make(chan greetingResult)

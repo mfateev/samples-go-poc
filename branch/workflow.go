@@ -14,7 +14,7 @@ import (
 // This Workflow Definition shows how to call multiple Activities in parallel.
 // The number of branches is controlled by a passed in parameter.
 //
-//go:isolate
+//temporal:workflow
 func SampleBranchWorkflow(ctx context.Context, totalBranches int) (result []string, err error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("SampleBranchWorkflow begin")

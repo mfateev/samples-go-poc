@@ -17,7 +17,7 @@ const (
 
 // @@@SNIPSTART samples-go-opentelemetry-v2-update-handler-span
 //
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context) (string, error) {
 	var result string
 	updateCompleted := make(chan struct{})

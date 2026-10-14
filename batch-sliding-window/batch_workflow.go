@@ -20,7 +20,7 @@ type ProcessBatchWorkflowInput struct {
 // ProcessBatchWorkflow sample Partitions the data set into continuous ranges.
 // A real application can choose any other way to divide the records into multiple collections.
 //
-//go:isolate
+//temporal:workflow
 func ProcessBatchWorkflow(ctx context.Context, input ProcessBatchWorkflowInput) (processed int, err error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		StartToCloseTimeout: 5 * time.Second,

@@ -43,7 +43,7 @@ type OrderStatus struct {
 
 // Workflow is a workflow driven by interaction from a UI.
 //
-//go:isolate
+//temporal:workflow
 func OrderWorkflow(ctx context.Context) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 5 * time.Second,
@@ -134,7 +134,7 @@ func OrderWorkflow(ctx context.Context) error {
 	return nil
 }
 
-//go:isolate
+//temporal:workflow
 func ShippingWorkflow(ctx context.Context, order TShirtOrder) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 5 * time.Second,
@@ -156,7 +156,7 @@ func ShippingWorkflow(ctx context.Context, order TShirtOrder) error {
 	return nil
 }
 
-//go:isolate
+//temporal:workflow
 func UpdateOrderWorkflow(ctx context.Context, orderWorkflowID string, stage string, value string) (OrderStatus, error) {
 	status := OrderStatus{OrderID: orderWorkflowID, Stage: stage}
 

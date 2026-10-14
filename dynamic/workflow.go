@@ -10,7 +10,7 @@ import (
 
 // SampleGreetingsWorkflow Workflow.
 //
-//go:isolate
+//temporal:workflow
 func SampleGreetingsWorkflow(ctx context.Context) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,

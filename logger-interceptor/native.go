@@ -10,7 +10,7 @@ import (
 	"go.temporal.io/sdk/log"
 )
 
-//go:isolate
+//temporal:workflow
 func NewWorkflowInterceptors(config []byte) ([]interceptor.WorkerInterceptor, error) {
 	var tags []any
 	if len(config) > 0 {

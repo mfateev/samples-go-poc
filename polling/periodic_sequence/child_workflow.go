@@ -14,7 +14,7 @@ type ChildWorkflowParams struct {
 	PollingInterval time.Duration
 }
 
-//go:isolate
+//temporal:workflow
 func PollingChildWorkflow(ctx context.Context, params ChildWorkflowParams) (string, error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("Starting child workflow with params", params)

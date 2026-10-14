@@ -76,7 +76,7 @@ func (s *Mutex) Lock(ctx context.Context,
 
 // MutexWorkflow used for locking a resource
 //
-//go:isolate
+//temporal:workflow
 func MutexWorkflow(
 	ctx context.Context,
 	namespace string,
@@ -175,7 +175,7 @@ func generateUnlockChannelName(senderWorkflowID string) string {
 	return fmt.Sprintf("unlock-event-%s", senderWorkflowID)
 }
 
-//go:isolate
+//temporal:workflow
 func SampleWorkflowWithMutex(
 	ctx context.Context,
 	resourceID string,

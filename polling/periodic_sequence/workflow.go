@@ -12,7 +12,7 @@ const (
 	TaskQueueName = "pollingPeriodicSequenceSampleQueue"
 )
 
-//go:isolate
+//temporal:workflow
 func PeriodicSequencePolling(ctx context.Context, pollingInterval time.Duration) (string, error) {
 	cwo := workflow.ChildWorkflowOptions{}
 	ctx = workflow.WithChildWorkflowOptions(ctx, cwo)

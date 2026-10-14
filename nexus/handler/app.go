@@ -27,7 +27,7 @@ var HelloOperation = temporalnexus.MustNewWorkflowRunOperationWithOptions(tempor
 	return temporalnexus.ExecuteUntypedWorkflow[service.HelloOutput](ctx, options, client.StartWorkflowOptions{ID: service.HelloWorkflowID(input)}, "HelloHandlerWorkflow", input)
 }})
 
-//go:isolate
+//temporal:workflow
 func HelloHandlerWorkflow(_ context.Context, input service.HelloInput) (service.HelloOutput, error) {
 	switch input.Language {
 	case service.EN:

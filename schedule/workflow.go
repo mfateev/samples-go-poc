@@ -12,7 +12,7 @@ import (
 
 // SampleScheduleWorkflow executes on the given schedule
 //
-//go:isolate
+//temporal:workflow
 func SampleScheduleWorkflow(ctx context.Context) error {
 
 	workflow.GetLogger(ctx).Info("Schedule workflow started.", "StartTime", time.Now())

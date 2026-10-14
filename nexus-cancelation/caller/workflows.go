@@ -30,7 +30,7 @@ type result struct {
 	err    error
 }
 
-//go:isolate
+//temporal:workflow
 func HelloCallerWorkflow(ctx context.Context, name string) (string, error) {
 	log := workflow.GetLogger(ctx)
 	c := workflow.NewNexusClient(endpointName, service.HelloServiceName)

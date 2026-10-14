@@ -177,7 +177,7 @@ mkdir -p bin
 ../golang-go/bin/go build -o bin/replay ./replay
 ```
 
-Workflow functions carry a `//go:isolate` directive. Workers import them and use
+Workflow functions carry a `//temporal:workflow` directive. Workers import them and use
 the POC SDK's `worker.New` and normal `RegisterWorkflow(fn)` API. The build
 discovers marked functions through the host's imports and generates typed
 invokers and per-instance state factories. No isolate config, workflow `main`,
@@ -201,7 +201,7 @@ For example, the hello world worker registers `helloworld.HelloWorld`, declared 
 `helloworld/workflow.go`:
 
 ```go
-//go:isolate
+//temporal:workflow
 func HelloWorld(ctx context.Context, name string) (string, error) {
     ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
         StartToCloseTimeout: 10*time.Second,

@@ -10,7 +10,7 @@ import (
 
 // LargePayloadWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func LargePayloadWorkflow(ctx context.Context, payloadSize int) (err error) {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,

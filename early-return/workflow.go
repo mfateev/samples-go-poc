@@ -35,7 +35,7 @@ type Transaction struct {
 // the initialization in a single round trip, even before the transaction processing completes. The remainder
 // of the transaction is then processed asynchronously.
 //
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, tx TransactionRequest) (*Transaction, error) {
 	return run(ctx, tx)
 }

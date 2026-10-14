@@ -22,7 +22,7 @@ type ChunkResult struct {
 
 // SampleSplitMergeSelectorWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SampleSplitMergeSelectorWorkflow(ctx context.Context, workerCount int) (ChunkResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
 	type completion struct {

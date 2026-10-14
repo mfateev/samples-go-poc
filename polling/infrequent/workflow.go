@@ -26,7 +26,7 @@ const (
 // retried based on our 60 seconds retry interval until poll is successful, and we can return a
 // result from the activity.
 //
-//go:isolate
+//temporal:workflow
 func InfrequentPolling(ctx context.Context) (string, error) {
 	logger := workflow.GetLogger(ctx)
 	ao := workflow.ActivityOptions{

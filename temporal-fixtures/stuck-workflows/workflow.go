@@ -17,7 +17,7 @@ import (
 
 // StuckWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func StuckWorkflow(ctx context.Context) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 24 * time.Hour,

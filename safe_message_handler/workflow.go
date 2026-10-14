@@ -320,7 +320,7 @@ func (cm *ClusterManager) run(ctx context.Context) (ClusterManagerResult, error)
 // Via updates, clients can also assign jobs to nodes and delete jobs.
 // These updates must run atomically.
 //
-//go:isolate
+//temporal:workflow
 func ClusterManagerWorkflow(ctx context.Context, wfInput ClusterManagerInput) (ClusterManagerResult, error) {
 	cm, err := newClusterManager(ctx, wfInput)
 	if err != nil {

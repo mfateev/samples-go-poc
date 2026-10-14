@@ -12,7 +12,7 @@ import (
 // @@@SNIPSTART samples-go-cw-cas-child-workflow-definition
 // SampleChildWorkflow is a Workflow Definition
 //
-//go:isolate
+//temporal:workflow
 func SampleChildWorkflow(ctx context.Context, totalCount, runCount int) (string, error) {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("Child workflow execution started.")

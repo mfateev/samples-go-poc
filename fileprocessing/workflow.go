@@ -12,7 +12,7 @@ import (
 
 // SampleFileProcessingWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SampleFileProcessingWorkflow(ctx context.Context, fileName string) (err error) {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,

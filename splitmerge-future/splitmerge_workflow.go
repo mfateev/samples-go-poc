@@ -22,7 +22,7 @@ type ChunkResult struct {
 
 // SampleSplitMergeFutureWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SampleSplitMergeFutureWorkflow(ctx context.Context, processorCount int) (ChunkResult, error) {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,

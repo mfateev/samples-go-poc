@@ -15,7 +15,7 @@ import (
 // FileProcessingWorkflow is a workflow that uses Worker-specific Task Queues to run multiple Activities on a consistent
 // host.
 //
-//go:isolate
+//temporal:workflow
 func FileProcessingWorkflow(ctx context.Context) (err error) {
 	// When using a worker-specific task queue, if a failure occurs, we want to retry all of the worker-specific
 	// logic, so wrap all the logic here in a loop.

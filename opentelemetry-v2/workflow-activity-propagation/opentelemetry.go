@@ -15,7 +15,7 @@ const TaskQueueName = "workflow-activity-propagation"
 // @@@SNIPSTART samples-go-opentelemetry-v2-application-spans
 const instrumentationName = "github.com/temporalio/samples-go/opentelemetry-v2/workflow-activity-propagation"
 
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, name string) (string, error) {
 	tracer := temporalotel.NewSinkTracerProvider(1000).Tracer(instrumentationName)
 	ctx, span := tracer.Start(ctx, "workflow-operation")

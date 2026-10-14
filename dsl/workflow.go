@@ -55,7 +55,7 @@ type (
 
 // SimpleDSLWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SimpleDSLWorkflow(ctx context.Context, dslWorkflow Workflow) ([]byte, error) {
 	bindings := &bindings{values: make(map[string]string)}
 	for k, v := range dslWorkflow.Variables {

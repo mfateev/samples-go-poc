@@ -18,7 +18,7 @@ const (
 // CallerRemoteWorkflow starts two remote GreetingWorkflows via runFromRemote,
 // interacts with both via queries/updates/signals, then waits for results.
 //
-//go:isolate
+//temporal:workflow
 func CallerRemoteWorkflow(ctx context.Context) ([]string, error) {
 	var log []string
 	c := workflow.NewNexusClient(endpointName, service.ServiceName)

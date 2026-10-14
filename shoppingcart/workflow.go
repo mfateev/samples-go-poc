@@ -16,7 +16,7 @@ type CartState struct {
 	Items map[string]int // itemID -> quantity
 }
 
-//go:isolate
+//temporal:workflow
 func CartWorkflow(ctx context.Context, cart *CartState) error {
 	if cart == nil {
 		cart = &CartState{make(map[string]int)}

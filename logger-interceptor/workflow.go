@@ -8,7 +8,7 @@ import (
 	"go.temporal.io/sdk/activity"
 )
 
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, name string) (string, error) {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,

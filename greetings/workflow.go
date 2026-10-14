@@ -13,7 +13,7 @@ import (
 // It gets greeting and name from 2 different activities,
 // and then pass greeting and name as input to a 3rd activity to generate final greetings.
 //
-//go:isolate
+//temporal:workflow
 func GreetingSample(ctx context.Context) (string, error) {
 	logger := workflow.GetLogger(ctx)
 

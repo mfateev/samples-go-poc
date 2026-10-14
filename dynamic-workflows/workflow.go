@@ -10,7 +10,7 @@ import (
 	"go.temporal.io/sdk/converter"
 )
 
-//go:isolate
+//temporal:workflow
 func DynamicWorkflow(ctx context.Context, args converter.EncodedValues) (string, error) {
 	var result string
 	info := workflow.GetInfo(ctx)

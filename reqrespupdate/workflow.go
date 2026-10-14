@@ -22,7 +22,7 @@ var (
 // UppercaseWorkflow is a workflow that accepts requests to uppercase strings
 // via updates and provides a response.
 //
-//go:isolate
+//temporal:workflow
 func UppercaseWorkflow(ctx context.Context, rejectUpdateOnPendingContinueAsNew bool) error {
 	// Create and run the uppercaser. We choose to use a separate struct for this
 	// to make state management easier.

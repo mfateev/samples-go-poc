@@ -10,7 +10,7 @@ import (
 
 const TaskQueueName = "automatic-instrumentation"
 
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, name string) (string, error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,

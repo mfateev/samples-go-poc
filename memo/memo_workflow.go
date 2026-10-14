@@ -31,7 +31,7 @@ var (
 
 // MemoWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func MemoWorkflow(ctx context.Context) error {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("Memo workflow started")

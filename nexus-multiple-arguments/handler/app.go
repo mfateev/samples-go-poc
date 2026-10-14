@@ -36,7 +36,7 @@ var HelloOperation = temporalnexus.MustNewWorkflowRunOperationWithOptions(tempor
 
 // @@@SNIPEND
 
-//go:isolate
+//temporal:workflow
 func HelloHandlerWorkflow(ctx context.Context, name string, language service.Language) (service.HelloOutput, error) {
 	switch language {
 	case service.EN:

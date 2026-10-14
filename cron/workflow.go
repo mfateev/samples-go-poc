@@ -17,7 +17,7 @@ type CronResult struct {
 // SampleCronWorkflow executes on the given schedule
 // The schedule is provided when starting the Workflow
 //
-//go:isolate
+//temporal:workflow
 func SampleCronWorkflow(ctx context.Context) (*CronResult, error) {
 
 	workflow.GetLogger(ctx).Info("Cron workflow started.", "StartTime", time.Now())

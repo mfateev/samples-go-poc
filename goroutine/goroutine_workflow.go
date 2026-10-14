@@ -17,7 +17,7 @@ import (
 
 // SampleGoroutineWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SampleGoroutineWorkflow(ctx context.Context, parallelism int) ([]string, error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
 	ctx, cancel := context.WithCancel(ctx)

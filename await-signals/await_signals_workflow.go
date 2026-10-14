@@ -14,7 +14,7 @@ var FromFirstSignalTimeout = 60 * time.Second
 
 // AwaitSignalsWorkflow processes signals in order, retaining early arrivals.
 //
-//go:isolate
+//temporal:workflow
 func AwaitSignalsWorkflow(ctx context.Context) error {
 	channels := []<-chan any{workflow.GetSignalChannel[any](ctx, "Signal1"), workflow.GetSignalChannel[any](ctx, "Signal2"), workflow.GetSignalChannel[any](ctx, "Signal3")}
 	received := [3]bool{}

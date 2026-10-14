@@ -11,7 +11,7 @@ import (
 
 // SampleTimerWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SampleTimerWorkflow(ctx context.Context, processingTimeThreshold time.Duration) error {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
 	processing := workflow.ExecuteActivity(ctx, OrderProcessingActivity)

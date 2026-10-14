@@ -13,7 +13,7 @@ import (
 // Workflow is a workflow function which does some logging.
 // Important note: workflow logger is replay aware and it won't log during replay.
 //
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, name string) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,

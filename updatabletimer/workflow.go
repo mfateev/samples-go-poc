@@ -50,7 +50,7 @@ func (u *UpdatableTimer) GetWakeUpTime() time.Time {
 
 // Workflow that sleeps initialWakeUpTime unless the new wake-up time is received through "UpdateWakeUpTime" signal.
 //
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, initialWakeUpTime time.Time) error {
 	timer := UpdatableTimer{}
 	err := workflow.SetQueryHandler(ctx, QueryType, func() (time.Time, error) {

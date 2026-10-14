@@ -9,7 +9,7 @@ import (
 // @@@SNIPSTART samples-go-child-workflow-example-child-workflow-definition
 // SampleChildWorkflow is a Workflow Definition
 //
-//go:isolate
+//temporal:workflow
 func SampleChildWorkflow(ctx context.Context, name string) (string, error) {
 	logger := workflow.GetLogger(ctx)
 	greeting := "Hello " + name + "!"

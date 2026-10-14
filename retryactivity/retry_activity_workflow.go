@@ -17,7 +17,7 @@ import (
 
 // RetryWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func RetryWorkflow(ctx context.Context) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 2 * time.Minute,

@@ -50,7 +50,7 @@ type (
 // SlidingWindowWorkflow workflow processes a range of records using a requested number of child workflows.
 // As soon as a child workflow completes a new one is started.
 //
-//go:isolate
+//temporal:workflow
 func SlidingWindowWorkflow(ctx context.Context, input SlidingWindowWorkflowInput) (recordCount int, err error) {
 	workflow.GetLogger(ctx).Info("SlidingWindowWorkflow",
 		"input", input.SlidingWindowSize,

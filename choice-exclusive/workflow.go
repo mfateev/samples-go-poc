@@ -16,7 +16,7 @@ const (
 	OrderChoiceOrange = "orange"
 )
 
-//go:isolate
+//temporal:workflow
 func ExclusiveChoice(ctx context.Context) error {
 	// A nil receiver is only a method identifier. Temporal invokes the
 	// registered host OrderActivities instance, with its configured choices.

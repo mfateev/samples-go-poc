@@ -11,7 +11,7 @@ import (
 
 // OpenNClosedWorkflow workflow definition.
 //
-//go:isolate
+//temporal:workflow
 func OpenNClosedWorkflow(ctx context.Context, keepOpen bool) (string, error) {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 1 * time.Hour,

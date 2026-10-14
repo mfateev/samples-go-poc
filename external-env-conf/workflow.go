@@ -10,7 +10,7 @@ import (
 
 // Workflow is a Hello World workflow definition.
 //
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, name string) (string, error) {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,

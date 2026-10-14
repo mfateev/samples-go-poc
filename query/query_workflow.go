@@ -10,7 +10,7 @@ import (
 
 // Workflow is to demo how to setup query handler
 //
-//go:isolate
+//temporal:workflow
 func QueryWorkflow(ctx context.Context) error {
 	queryResult := "started"
 	logger := workflow.GetLogger(ctx)

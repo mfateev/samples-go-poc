@@ -14,7 +14,7 @@ import (
 //
 // The "request" signal accepts a Request.
 //
-//go:isolate
+//temporal:workflow
 func UppercaseWorkflow(ctx context.Context) error {
 	// Create and run the uppercaser. We choose to use a separate struct for this
 	// to make state management easier.

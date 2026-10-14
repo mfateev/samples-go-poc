@@ -18,7 +18,7 @@ const (
 
 // MultiChoiceWorkflow Workflow definition.
 //
-//go:isolate
+//temporal:workflow
 func MultiChoiceWorkflow(ctx context.Context) error {
 	// Get basket order.
 	ao := workflow.ActivityOptions{

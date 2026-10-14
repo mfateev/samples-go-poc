@@ -12,7 +12,7 @@ const (
 	TaskQueueName = "pollingFrequentlySampleQueue"
 )
 
-//go:isolate
+//temporal:workflow
 func FrequentPolling(ctx context.Context) (string, error) {
 	logger := workflow.GetLogger(ctx)
 

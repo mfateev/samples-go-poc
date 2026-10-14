@@ -26,7 +26,7 @@ var (
 
 // SearchAttributesWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SearchAttributesWorkflow(ctx context.Context) error {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("SearchAttributes workflow started")

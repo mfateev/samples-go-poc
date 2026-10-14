@@ -14,7 +14,7 @@ var (
 
 // SampleExpenseWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SampleExpenseWorkflow(ctx context.Context, expenseID string) (result string, err error) {
 	// step 1, create new expense report
 	ao := workflow.ActivityOptions{

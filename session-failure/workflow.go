@@ -16,7 +16,7 @@ var (
 
 // SampleSessionFailureRecoveryWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func SampleSessionFailureRecoveryWorkflow(ctx context.Context) (err error) {
 	for retryNum := 0; retryNum < 10; retryNum++ {
 		if err = runSession(ctx); errors.Is(err, ErrSessionHostDown) {

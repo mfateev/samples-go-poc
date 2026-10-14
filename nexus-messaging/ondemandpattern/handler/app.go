@@ -117,7 +117,7 @@ var ApproveOperation = nexus.NewSyncOperation(service.ApproveOperationName, func
 // GreetingWorkflow is a long-running workflow that supports queries, updates, and signals.
 // It takes no user-specific input — the workflow ID is used as the identity.
 //
-//go:isolate
+//temporal:workflow
 func GreetingWorkflow(ctx context.Context) (string, error) {
 	logger := workflow.GetLogger(ctx)
 

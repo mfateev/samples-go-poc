@@ -20,7 +20,7 @@ type Result struct {
 
 // Plan uses stable names to separate choices from jitter and optional audit draws.
 //
-//go:isolate
+//temporal:workflow
 func Plan(ctx context.Context, input Input) (Result, error) {
 	if input.Count < 1 || input.Count > 100 || input.AuditDraws < 0 || input.AuditDraws > 1000 {
 		return Result{}, errors.New("count must be 1..100 and audit draws must be 0..1000")

@@ -8,7 +8,7 @@ import (
 	"go.temporal.io/sdk/activity"
 )
 
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, name string) error {
 	workflow.GetLogger(ctx).Info("Executing Workflow.", "name", name)
 	cwo := workflow.ChildWorkflowOptions{
@@ -18,7 +18,7 @@ func Workflow(ctx context.Context, name string) error {
 	return workflow.ExecuteChildWorkflow(ctx, ChildWorkflow, name).Get(ctx, nil)
 }
 
-//go:isolate
+//temporal:workflow
 func ChildWorkflow(ctx context.Context, name string) error {
 	workflow.GetLogger(ctx).Info("Executing ChildWorkflow.", "name", name)
 	ao := workflow.ActivityOptions{

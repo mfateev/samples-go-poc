@@ -10,7 +10,7 @@ import (
 	"github.com/mfateev/sdk-go-poc/workflow"
 )
 
-//go:isolate
+//temporal:workflow
 func SleepForDays(ctx context.Context) (string, error) {
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 10 * time.Second})
 	signals := workflow.GetSignalChannel[[]byte](ctx, "complete")

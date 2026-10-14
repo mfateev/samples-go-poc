@@ -12,7 +12,7 @@ import (
 
 // LargeEventHistoryWorkflow workflow definition
 //
-//go:isolate
+//temporal:workflow
 func LargeEventHistoryWorkflow(ctx context.Context, LengthOfHistory int, WillFailOrNot bool) (err error) {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: time.Minute,

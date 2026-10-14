@@ -10,7 +10,7 @@ import (
 	"go.temporal.io/sdk/activity"
 )
 
-//go:isolate
+//temporal:workflow
 func Workflow(ctx context.Context, name string) error {
 	logger := workflow.GetLogger(ctx)
 	logger.Info("HelloWorld workflow started", "name", name)

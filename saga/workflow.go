@@ -11,7 +11,7 @@ import (
 	"go.temporal.io/sdk/temporal"
 )
 
-//go:isolate
+//temporal:workflow
 func TransferMoney(ctx context.Context, transferDetails TransferDetails) (err error) {
 	retryPolicy := &temporal.RetryPolicy{
 		InitialInterval:    time.Second,
