@@ -33,14 +33,11 @@ branch from source when developing compiler changes. The checked-in `go.work`
 makes the samples use the sibling SDK checkout directly, without pinning an
 isolate SDK version or commit in `go.mod`. Keep the SDK and samples beside each
 other as shown below; the binary installer provides the toolchain separately.
-The Temporal SDK dependency uses the audited
-`mfateev/temporal-go-sdk` revision `v1.49.0-isolates.1.0.20261012175541-b87b0a1d5dda`, based on upstream v1.49.0,
-because the adapter uses supported fork integration hooks. Go downloads it
-automatically; no fourth checkout is needed. Keep the installed compiler, SDK
-and samples aligned; use a source build if branch changes require a newer
-compiler than the published release. See the
-[SDK integration contracts](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/SDK_REFERENCE.md#versioned-integration-contracts)
-for version checks and upgrade/rollback validation.
+The SDK development branch uses a sibling `temporal-go-sdk` checkout for its
+upstream integration hooks. The workspace override selects that same checkout
+for all samples. `sdk-go-poc/toolchain/go-source.json` records matching compiler,
+upstream SDK and sample revisions. Keep these checkouts aligned when replaying
+saved histories.
 
 ## Go commands
 
@@ -60,7 +57,7 @@ On Debian or Ubuntu, install Git, curl, the archive tools, and a C compiler:
 
 ```sh
 sudo apt-get update
-sudo apt-get install -y ca-certificates curl git tar coreutils build-essential
+sudo apt-get install -y ca-certificates curl git tar coreutils build-essential python3
 ```
 
 On macOS, install the Xcode Command Line Tools if they are missing:
@@ -79,11 +76,11 @@ The installer provides the complete compiler and runtime for macOS and Linux
 on arm64 and amd64. An existing Go installation is not required.
 
 **Release availability:** the commands below require a published
-[tgo release](https://github.com/mfateev/golang-go/releases). Until the first
+[tgo release](https://github.com/mfateev/sdk-go-poc/releases). Until the first
 release is published, use the source build below.
 
 ```sh
-curl -fsSL https://github.com/mfateev/golang-go/releases/latest/download/install.sh -o install-tgo.sh
+curl -fsSL https://github.com/mfateev/sdk-go-poc/releases/latest/download/install.sh -o install-tgo.sh
 sh install-tgo.sh
 export PATH="$HOME/.local/bin:$PATH"
 tgo version
@@ -102,7 +99,7 @@ stable releases.
 
 ```sh
 TGO_VERSION=tgo-v0.1.0
-curl -fsSL "https://github.com/mfateev/golang-go/releases/download/$TGO_VERSION/install.sh" -o install-tgo.sh
+curl -fsSL "https://github.com/mfateev/sdk-go-poc/releases/download/$TGO_VERSION/install.sh" -o install-tgo.sh
 sh install-tgo.sh --version "$TGO_VERSION"
 ```
 
@@ -110,7 +107,7 @@ Pass `--prefix "$HOME/tools"` to install elsewhere, then add `$HOME/tools/bin`
 to PATH. Installing a new tag updates the launcher and retains older versions.
 To reinstall the same tag, remove its directory under your prefix's `lib/tgo`
 first. For Homebrew or offline installation, see the
-[toolchain installation guide](https://github.com/mfateev/golang-go/blob/task/modify-go-runtime-for-isolates/misc/tgo/README.md).
+[toolchain installation guide](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/toolchain/DISTRIBUTION.md).
 
 <details>
 <summary>Build tgo from source before the first release or for compiler development</summary>
@@ -161,21 +158,23 @@ tar -C "$POC_ROOT" -xzf "$POC_GO_ARCHIVE"
 "$POC_ROOT/go/bin/go" version
 ```
 
-Clone and build the compiler, then put its command on PATH:
+Build the SDK-owned toolchain from its pinned Go source (Python 3.11+ required):
 
 ```bash
-git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates \
-  https://github.com/mfateev/golang-go.git "$POC_ROOT/golang-go"
-cd "$POC_ROOT/golang-go/src"
-GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
+git clone --branch task/modify-go-runtime-for-isolates \
+  https://github.com/mfateev/sdk-go-poc.git "$POC_ROOT/sdk-go-poc"
+cd "$POC_ROOT/sdk-go-poc"
+GOROOT_BOOTSTRAP="$POC_ROOT/go" python3 toolchain/build.py --output "$POC_ROOT/golang-go"
 export PATH="$POC_ROOT/golang-go/bin:$POC_ROOT/go/bin:$PATH"
 export GOTOOLCHAIN=local
 tgo version
 cd "$POC_ROOT"
 ```
 
-Add the PATH and GOTOOLCHAIN settings to your shell startup file for other
-terminals. The `tgo version` line from the fork ends with `(isolates POC)`.
+The toolchain contains a conventional `bin/go` and an SDK-owned `bin/tgo`.
+`tgo` selects and verifies the isolate experiment before building workflows.
+For an explicit local compiler checkout, use `toolchain/build.py --source PATH
+--local` instead. Add the PATH settings to your shell startup file.
 
 </details>
 
@@ -187,8 +186,11 @@ beside the samples checkout:
 ```bash
 POC_ROOT="$HOME/temporal-isolates-poc"
 mkdir -p "$POC_ROOT"
-git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates \
+test -d "$POC_ROOT/sdk-go-poc/.git" || git clone --branch task/modify-go-runtime-for-isolates \
   https://github.com/mfateev/sdk-go-poc.git "$POC_ROOT/sdk-go-poc"
+git clone https://github.com/mfateev/temporal-go-sdk.git "$POC_ROOT/temporal-go-sdk"
+POC_SDK_REV=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["temporal_sdk_revision"])' "$POC_ROOT/sdk-go-poc/toolchain/go-source.json")
+git -C "$POC_ROOT/temporal-go-sdk" checkout "$POC_SDK_REV"
 git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates \
   https://github.com/mfateev/samples-go-poc.git "$POC_ROOT/samples-go-poc"
 export GOCACHE="$POC_ROOT/go-build-cache"
@@ -217,14 +219,17 @@ Install a newer compatible tgo release when needed using step 1.
 <details>
 <summary>Update a compiler built from source</summary>
 
-If you built the compiler from source in step 1, also pull and rebuild it:
+The SDK pin selects the compiler revision. After updating the SDK, build a new
+pinned toolchain into an empty directory and update PATH:
 
 ```bash
-git -C "$POC_ROOT/golang-go" pull --ff-only origin task/modify-go-runtime-for-isolates
-cd "$POC_ROOT/golang-go/src"
-GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
+cd "$POC_ROOT/sdk-go-poc"
+GOROOT_BOOTSTRAP="$POC_ROOT/go" python3 toolchain/build.py --output "$POC_ROOT/golang-go-next"
+export PATH="$POC_ROOT/golang-go-next/bin:$PATH"
 cd "$POC_ROOT/samples-go-poc"
 ```
+
+Use the SDK source pin to update the sibling `temporal-go-sdk` checkout too.
 
 </details>
 

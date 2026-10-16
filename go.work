@@ -8,3 +8,6 @@ use (
 	./codec-server
 	./grpc-proxy
 )
+
+// Match the SDK development checkout's integration hooks.
+replace go.temporal.io/sdk => ../temporal-go-sdk
