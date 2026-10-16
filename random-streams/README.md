@@ -22,26 +22,28 @@ Repeated queries return the same next choice without changing the workflow strea
 
 These generators are predictable. Use host activities for cryptographic secrets.
 
-With a Temporal server at `localhost:7233`, run from the repository root:
+Follow the [tgo installation and repository setup](../README.md#1-install-tgo-on-linux-or-macos)
+first. With `tgo` on PATH and a Temporal server at `localhost:7233`, run from the
+repository root:
 
 ```sh
 mkdir -p bin
-../golang-go/bin/tgo build -o bin/random-streams-worker ./random-streams/worker
+tgo build -o bin/random-streams-worker ./random-streams/worker
 ./bin/random-streams-worker
 ```
 
 In another terminal:
 
 ```sh
-../golang-go/bin/tgo run ./random-streams/starter -count 10 -audit-draws 123
+tgo run ./random-streams/starter -count 10 -audit-draws 123
 ```
 
 Set `TEMPORAL_ADDRESS` in both terminals to use another server. Native worker
 executables must be built with the isolate-aware toolchain.
 
 ```sh
-../golang-go/bin/tgo test ./random-streams/...
-SAMPLES_DEV_SERVER=1 ../golang-go/bin/tgo test -count=1 ./random-streams
+tgo test ./random-streams/...
+SAMPLES_DEV_SERVER=1 tgo test -count=1 ./random-streams
 ```
 
 The development-server test checks completed queries and compares recorded outputs

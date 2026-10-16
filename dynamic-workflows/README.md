@@ -16,19 +16,20 @@ The worker also retains the upstream `LoadDynamicRuntimeOptions` callback,
 selecting versioning behavior by workflow type. The starter uses workflow types
 whose behavior is unspecified, so it runs with the default worker options.
 
-From the repository root, with a Temporal service running at `localhost:7233`,
-build the worker with the modified toolchain and start it:
+Follow the [tgo installation and repository setup](../README.md#1-install-tgo-on-linux-or-macos)
+first. From the repository root, with `tgo` on PATH and a Temporal service
+running at `localhost:7233`, build the worker and start it:
 
 ```sh
 mkdir -p bin
-../golang-go/bin/tgo build -o bin/dynamic-workflows-worker ./dynamic-workflows/worker
+tgo build -o bin/dynamic-workflows-worker ./dynamic-workflows/worker
 ./bin/dynamic-workflows-worker
 ```
 
 In another terminal, run the host starter:
 
 ```sh
-../golang-go/bin/tgo run ./dynamic-workflows/starter
+tgo run ./dynamic-workflows/starter
 ```
 
 The three results are:
@@ -46,6 +47,6 @@ Run the native unit tests, or opt into a development server test that also repla
 the recorded histories:
 
 ```sh
-../golang-go/bin/tgo test ./dynamic-workflows/...
-SAMPLES_DEV_SERVER=1 ../golang-go/bin/tgo test -count=1 ./dynamic-workflows
+tgo test ./dynamic-workflows/...
+SAMPLES_DEV_SERVER=1 tgo test -count=1 ./dynamic-workflows
 ```

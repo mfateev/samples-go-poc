@@ -27,14 +27,19 @@ the workflow API and Temporal adapter in
 [`mfateev/sdk-go-poc`](https://github.com/mfateev/sdk-go-poc/tree/task/modify-go-runtime-for-isolates),
 and these examples in
 [`mfateev/samples-go-poc`](https://github.com/mfateev/samples-go-poc/tree/task/modify-go-runtime-for-isolates).
-All three use the `task/modify-go-runtime-for-isolates` branch. The checked-in
-`go.work` makes the samples use the sibling SDK checkout directly, without
-pinning an isolate SDK version or commit in `go.mod`. Keep the repositories
-beside each other as shown below. The Temporal SDK dependency uses the audited
+The SDK and samples checkouts use the `task/modify-go-runtime-for-isolates`
+branch. Install the compiler from a compatible tgo release, or build the same
+branch from source when developing compiler changes. The checked-in `go.work`
+makes the samples use the sibling SDK checkout directly, without pinning an
+isolate SDK version or commit in `go.mod`. Keep the SDK and samples beside each
+other as shown below; the binary installer provides the toolchain separately.
+The Temporal SDK dependency uses the audited
 `mfateev/temporal-go-sdk` revision `v1.49.0-isolates.1.0.20261012175541-b87b0a1d5dda`, based on upstream v1.49.0,
 because the adapter uses supported fork integration hooks. Go downloads it
-automatically; no fourth checkout is needed. Compiler, SDK and samples still use
-the branches above. See the [SDK integration contracts](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/README.md#versioned-integration-contracts)
+automatically; no fourth checkout is needed. Keep the installed compiler, SDK
+and samples aligned; use a source build if branch changes require a newer
+compiler than the published release. See the
+[SDK integration contracts](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/README.md#versioned-integration-contracts)
 for version checks and upgrade/rollback validation.
 
 ## Go commands
@@ -43,13 +48,13 @@ Use standard `go` for ordinary tools such as linters and code generators.
 Use `tgo` to build, test, or run workflow and worker programs: their host code
 and workflows are linked with the same modified Go runtime. Tools that load
 workflow packages need support for the custom toolchain.
-The installed POC command is `bin/tgo`; it does not install a `go` alias.
+The installed command is `tgo`. The examples below assume it is on `PATH`.
 
-## 1. Prepare a Linux or macOS machine
+## 1. Install tgo on Linux or macOS
 
 The commands below support ARM64 and x86-64 on Debian or Ubuntu Linux and
 macOS. The build and run sequence was verified on Linux ARM64. Have a few
-gigabytes of free space for the Go source build and module cache.
+gigabytes of free space for the toolchain, build cache, and module cache.
 
 On Debian or Ubuntu, install Git, curl, the archive tools, and a C compiler:
 
@@ -68,6 +73,48 @@ Wait for the installer to finish, then verify `xcode-select -p` succeeds before
 continuing. The tools provide Git and Clang; macOS also includes curl, tar, and
 `shasum`. The following shell blocks work in Bash or the default macOS zsh.
 
+### Install a precompiled release
+
+The installer provides the complete compiler and runtime for macOS and Linux
+on arm64 and amd64. An existing Go installation is not required.
+
+**Release availability:** the commands below require a published
+[tgo release](https://github.com/mfateev/golang-go/releases). Until the first
+release is published, use the source build below.
+
+```sh
+curl -fsSL https://github.com/mfateev/golang-go/releases/latest/download/install.sh -o install-tgo.sh
+sh install-tgo.sh
+export PATH="$HOME/.local/bin:$PATH"
+tgo version
+tgo env GOTOOLCHAIN
+```
+
+The installer detects the platform, verifies the archive's SHA-256 checksum,
+and installs under `$HOME/.local/lib/tgo/<tag>/go`, with a launcher at
+`$HOME/.local/bin/tgo`. Add the PATH line to your shell startup file so every
+terminal used below can find `tgo`. The launcher selects the bundled runtime
+and sets `GOTOOLCHAIN=local`; the last command should print `local`.
+
+To pin a version, choose a published tag from Releases. `tgo-v0.1.0` here is an
+example. Prereleases require the tag-specific installer URL; `latest` selects
+stable releases.
+
+```sh
+TGO_VERSION=tgo-v0.1.0
+curl -fsSL "https://github.com/mfateev/golang-go/releases/download/$TGO_VERSION/install.sh" -o install-tgo.sh
+sh install-tgo.sh --version "$TGO_VERSION"
+```
+
+Pass `--prefix "$HOME/tools"` to install elsewhere, then add `$HOME/tools/bin`
+to PATH. Installing a new tag updates the launcher and retains older versions.
+To reinstall the same tag, remove its directory under your prefix's `lib/tgo`
+first. For Homebrew or offline installation, see the
+[toolchain installation guide](https://github.com/mfateev/golang-go/blob/task/modify-go-runtime-for-isolates/misc/tgo/README.md).
+
+<details>
+<summary>Build tgo from source before the first release or for compiler development</summary>
+
 The fork is Go 1.28 development source and requires Go 1.26.0 or newer for
 bootstrapping. These commands install Go 1.26.7 into a new directory under
 your home directory. The SHA-256 values are from [the Go downloads page](https://go.dev/dl/).
@@ -78,8 +125,6 @@ POC_ROOT="$HOME/temporal-isolates-poc"
 mkdir -p "$POC_ROOT"
 test ! -e "$POC_ROOT/go"
 test ! -e "$POC_ROOT/golang-go"
-test ! -e "$POC_ROOT/sdk-go-poc"
-test ! -e "$POC_ROOT/samples-go-poc"
 
 case "$(uname -s)/$(uname -m)" in
   Linux/aarch64|Linux/arm64)
@@ -116,55 +161,72 @@ tar -C "$POC_ROOT" -xzf "$POC_GO_ARCHIVE"
 "$POC_ROOT/go/bin/go" version
 ```
 
-## 2. Clone the three repositories and build the toolchain
-
-Continue in the same terminal. Use the POC branch for each repository.
+Clone and build the compiler, then put its command on PATH:
 
 ```bash
 git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates \
   https://github.com/mfateev/golang-go.git "$POC_ROOT/golang-go"
+cd "$POC_ROOT/golang-go/src"
+GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
+export PATH="$POC_ROOT/golang-go/bin:$POC_ROOT/go/bin:$PATH"
+export GOTOOLCHAIN=local
+tgo version
+cd "$POC_ROOT"
+```
+
+Add the PATH and GOTOOLCHAIN settings to your shell startup file for other
+terminals. The `tgo version` line from the fork ends with `(isolates POC)`.
+
+</details>
+
+## 2. Clone the SDK and samples
+
+Continue in the same terminal. The samples' workspace requires the SDK checkout
+beside the samples checkout:
+
+```bash
+POC_ROOT="$HOME/temporal-isolates-poc"
+mkdir -p "$POC_ROOT"
 git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates \
   https://github.com/mfateev/sdk-go-poc.git "$POC_ROOT/sdk-go-poc"
 git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates \
   https://github.com/mfateev/samples-go-poc.git "$POC_ROOT/samples-go-poc"
-cd "$POC_ROOT/golang-go/src"
-GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
-"$POC_ROOT/golang-go/bin/tgo" version
-export PATH="$POC_ROOT/golang-go/bin:$POC_ROOT/go/bin:$PATH"
 export GOCACHE="$POC_ROOT/go-build-cache"
 mkdir -p "$GOCACHE"
-"$POC_ROOT/golang-go/bin/tgo" env GOCACHE
 cd "$POC_ROOT/samples-go-poc"
-"$POC_ROOT/golang-go/bin/tgo" env GOWORK
+tgo env GOCACHE GOWORK
 ```
 
-The `tgo version` line from the fork ends with `(isolates POC)`.
+Go's build cache accounts for compiler changes, so a separate cache is optional.
+This `GOCACHE` makes cleanup targeted; source builds manage their own bootstrap
+cache. The printed workspace path should end in `samples-go-poc/go.work`. That
+file loads this module, `../sdk-go-poc`, `./codec-server`, and `./grpc-proxy`.
+The samples use the SDK branch's checked-out source. Go module requirements
+accept versions rather than branch names; the workspace selects the local SDK.
+Use `tgo` for all builds, tests, and runs below.
 
-Go's build cache already accounts for compiler changes, so a separate cache
-is not required for correctness. `make.bash` manages its own bootstrap cache;
-this `GOCACHE` applies to the later sample builds. It makes cleanup targeted,
-but can increase total disk use if your usual Go cache is also populated.
+To update an existing checkout, first commit or stash local edits, then run:
 
-The printed workspace path should end in `samples-go-poc/go.work`. That file
-loads this module and `../sdk-go-poc`, so builds use the SDK branch you cloned.
-Go module requirements accept versions rather than branch names; this
-workspace is how these samples consume the branch's checked-out source.
-If you already created a parent workspace using the older instructions, the
-samples' own workspace takes precedence. Use `../golang-go/bin/tgo` for all
-commands in this module. A system Go toolchain lacks the isolate runtime API
-and marker handling.
+```bash
+git -C "$POC_ROOT/sdk-go-poc" pull --ff-only origin task/modify-go-runtime-for-isolates
+git -C "$POC_ROOT/samples-go-poc" pull --ff-only origin task/modify-go-runtime-for-isolates
+```
 
-To update an existing checkout to the latest POC branch, first commit or stash
-any local edits, then run:
+Install a newer compatible tgo release when needed using step 1.
+
+<details>
+<summary>Update a compiler built from source</summary>
+
+If you built the compiler from source in step 1, also pull and rebuild it:
 
 ```bash
 git -C "$POC_ROOT/golang-go" pull --ff-only origin task/modify-go-runtime-for-isolates
-git -C "$POC_ROOT/sdk-go-poc" pull --ff-only origin task/modify-go-runtime-for-isolates
-git -C "$POC_ROOT/samples-go-poc" pull --ff-only origin task/modify-go-runtime-for-isolates
 cd "$POC_ROOT/golang-go/src"
 GOROOT_BOOTSTRAP="$POC_ROOT/go" ./make.bash
 cd "$POC_ROOT/samples-go-poc"
 ```
+
+</details>
 
 Then repeat the builds in step 3. Pulling the SDK branch updates the source
 used by the workspace; no `go get` or SDK version edit is needed.
@@ -174,15 +236,15 @@ used by the workspace; no `go get` or SDK version edit is needed.
 Run from `samples-go-poc` after the previous step:
 
 ```bash
-../golang-go/bin/tgo mod download
-../golang-go/bin/tgo test -p 3 ./... ./codec-server/... ./grpc-proxy/...
+tgo mod download
+tgo test -p 3 ./... ./codec-server/... ./grpc-proxy/...
 mkdir -p bin
-../golang-go/bin/tgo build -o bin/helloworld-worker ./helloworld/worker
-../golang-go/bin/tgo build -o bin/choice-worker ./choice-exclusive/worker
-../golang-go/bin/tgo build -o bin/sleep-for-days-worker ./sleep-for-days/worker
-../golang-go/bin/tgo build -o bin/goroutines-worker ./goroutines/worker
-../golang-go/bin/tgo build -o bin/goroutines-starter ./goroutines/starter
-../golang-go/bin/tgo build -o bin/replay ./replay
+tgo build -o bin/helloworld-worker ./helloworld/worker
+tgo build -o bin/choice-worker ./choice-exclusive/worker
+tgo build -o bin/sleep-for-days-worker ./sleep-for-days/worker
+tgo build -o bin/goroutines-worker ./goroutines/worker
+tgo build -o bin/goroutines-starter ./goroutines/starter
+tgo build -o bin/replay ./replay
 ```
 
 Workflow functions carry a `//temporal:workflow` directive. Workers import them and use
@@ -239,6 +301,16 @@ Download Temporal CLI 1.9.1 from [Temporal's archive](https://github.com/tempora
 These commands still run in the setup terminal:
 
 ```bash
+case "$(uname -s)" in
+  Linux) POC_PLATFORM=linux ;;
+  Darwin) POC_PLATFORM=darwin ;;
+  *) echo "Unsupported operating system" >&2; exit 1 ;;
+esac
+case "$(uname -m)" in
+  aarch64|arm64) POC_ARCH=arm64 ;;
+  x86_64|amd64) POC_ARCH=amd64 ;;
+  *) echo "Unsupported architecture" >&2; exit 1 ;;
+esac
 curl -fL --retry 3 -o "$POC_ROOT/temporal-cli.tar.gz" \
   "https://temporal.download/cli/archive/v1.9.1?platform=$POC_PLATFORM&arch=$POC_ARCH"
 mkdir -p "$POC_ROOT/temporal-cli"
@@ -271,8 +343,8 @@ Once both workers report `Started Worker`, use **Terminal 4** for the starters:
 ```bash
 cd "$HOME/temporal-isolates-poc/samples-go-poc"
 export GOCACHE="$HOME/temporal-isolates-poc/go-build-cache"
-../golang-go/bin/tgo run ./helloworld/starter Temporal
-../golang-go/bin/tgo run ./choice-exclusive/starter
+tgo run ./helloworld/starter Temporal
+tgo run ./choice-exclusive/starter
 ```
 
 The first starter prints `Hello Temporal!`; the second prints
@@ -369,7 +441,7 @@ the Workflow ID printed by the starter:
 
 ```bash
 cd "$HOME/temporal-isolates-poc/samples-go-poc"
-../golang-go/bin/tgo run ./sleep-for-days/starter
+tgo run ./sleep-for-days/starter
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow signal \
   --workflow-id YOUR_WORKFLOW_ID --name complete
 "$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
@@ -416,7 +488,7 @@ It prints the Workflow ID followed by `Hello Ada!`, `Hello Grace!`, and
 ./bin/replay GreetAll bin/goroutines-history.json
 ```
 
-`../golang-go/bin/tgo test ./goroutines` checks empty input, concurrent activity
+`tgo test ./goroutines` checks empty input, concurrent activity
 scheduling, completions delivered in reverse order, and activity errors with
 GOMAXPROCS 1, 2, and 8. Live execution and fresh-process replay at those three
 settings passed on Linux ARM64; the replayer also compares the greeting result
@@ -427,7 +499,7 @@ the POC build cache:
 
 ```sh
 GOCACHE="$HOME/temporal-isolates-poc/go-build-cache" \
-  "$HOME/temporal-isolates-poc/golang-go/bin/tgo" clean -cache
+  tgo clean -cache
 ```
 
 ### SDK-compatible activities
