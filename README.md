@@ -39,7 +39,7 @@ because the adapter uses supported fork integration hooks. Go downloads it
 automatically; no fourth checkout is needed. Keep the installed compiler, SDK
 and samples aligned; use a source build if branch changes require a newer
 compiler than the published release. See the
-[SDK integration contracts](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/README.md#versioned-integration-contracts)
+[SDK integration contracts](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/SDK_REFERENCE.md#versioned-integration-contracts)
 for version checks and upgrade/rollback validation.
 
 ## Go commands
