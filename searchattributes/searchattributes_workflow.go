@@ -102,8 +102,10 @@ func SearchAttributesWorkflow(ctx context.Context) error {
 func printSearchAttributes(ctx context.Context) {
 	logger := workflow.GetLogger(ctx)
 	sas := workflow.GetTypedSearchAttributes(ctx)
-	for k, v := range sas.GetUntypedValues() {
-		logger.Info("Current search attribute value", k.GetName(), v)
+	for _, entry := range workflow.SearchAttributeEntries(sas) {
+		if entry.Value != nil {
+			logger.Info("Current search attribute value", entry.Key.GetName(), entry.Value)
+		}
 	}
 }
 
