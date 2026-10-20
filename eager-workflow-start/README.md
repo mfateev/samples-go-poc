@@ -8,7 +8,7 @@ Here we modify the `helloworld` sample, ensuring that starter and worker run in 
 
 ### Steps to run this sample:
 
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use) with eager workflow start enabled by a dynamic config value.
+1) Run a [Temporal service](../README.md#setup) with eager workflow start enabled by a dynamic config value.
 ```
 temporal server start-dev --dynamic-config-value system.enableEagerWorkflowStart=true
 ```

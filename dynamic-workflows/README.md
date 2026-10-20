@@ -1,7 +1,5 @@
 # Dynamic Workflows and Activities
 
-Adapted from [Temporal's Go sample at d378442](https://github.com/temporalio/samples-go/tree/d3784428122e0cd4b28e91a0cd86b589749abf28/dynamic-workflows).
-
 A single `DynamicWorkflow` handles workflow types that have no named registration.
 It uses `context.Context`, is marked `//temporal:workflow`, and decodes its arguments from
 `converter.EncodedValues` inside the isolate. The requested type is available as
@@ -16,7 +14,7 @@ The worker also retains the upstream `LoadDynamicRuntimeOptions` callback,
 selecting versioning behavior by workflow type. The starter uses workflow types
 whose behavior is unspecified, so it runs with the default worker options.
 
-Follow the [tgo installation and repository setup](../README.md#1-install-tgo-on-linux-or-macos)
+Follow the [tgo installation and repository setup](../README.md#setup)
 first. From the repository root, with `tgo` on PATH and a Temporal service
 running at `localhost:7233`, build the worker and start it:
 

@@ -1,7 +1,8 @@
 ## Nexus Operation Backed by a Standalone Activity
 
 > [!WARNING]
-> Standalone Nexus Operations and Standalone Activities are experimental and may be subject to backwards-incompatible changes. They require a Temporal server that implements and enables them via the dynamic configs shown below. Use the dev server build at https://github.com/temporalio/cli/releases/tag/v1.7.4-standalone-nexus-operations.
+> Standalone Nexus Operations and Standalone Activities are experimental and may be subject to backwards-incompatible changes. They require a Temporal server that implements and enables them via the dynamic configs shown below. Use a server/CLI supporting the standalone operation APIs and the required
+> activity callback configuration.
 
 This sample shows how to implement a Nexus Operation whose backing execution is a **Standalone Activity**.
 
@@ -39,10 +40,9 @@ The starter and worker connect to two different namespaces (a "caller" namespace
 3) In a second terminal, start the worker in the handler namespace:
 
 ```bash
-TEMPORAL_NAMESPACE=my-handler-namespace \
-  mkdir -p bin
-  tgo build -o bin/nexus-standalone-activity-worker nexus-standalone-activity/worker/main.go
-  ./bin/nexus-standalone-activity-worker
+mkdir -p bin
+tgo build -o bin/nexus-standalone-activity-worker ./nexus-standalone-activity/worker
+TEMPORAL_NAMESPACE=my-handler-namespace ./bin/nexus-standalone-activity-worker
 ```
 
 You should see a log line similar to:

@@ -1,23 +1,24 @@
-# Atomic message handlers
+# Synchronized message handlers
 
-This sample shows off important techniques for handling signals and updates, aka messages.  In particular, it illustrates how message handlers can interleave or not be completed before the workflow completes, and how you can manage that.
+ClusterManagerWorkflow uses native notification channels to delay message
+handling until startup and sync.Mutex to protect state across yielding activity
+calls. Updates can interleave while waiting, so lock ownership matters even with
+single-token dispatch. Assignment updates check idempotency before scheduling.
+Before completion/Continue-As-New, workflow.WaitHandlersFinished waits for accepted
+update completions. Signal goroutines require their own coordination. State is
+carried explicitly into the next run.
 
-* Here, using workflow.Await, signal and update handlers will only operate when the workflow is within a certain state--between cluster_started and cluster_shutdown.
-* Message handlers can block and their actions can be interleaved with one another and with the main workflow.  This can easily cause bugs, so you can use a lock to protect shared state from interleaved access.
-* An "Entity" workflow, i.e. a long-lived workflow, periodically "continues as new".  It must do this to prevent its history from growing too large, and it passes its state to the next workflow.  You can check `workflow.GetInfo().GetContinueAsNewSuggested()` to see when it's time.
-* Most people want their message handlers to finish before the workflow run completes or continues as new.  Use `workflow.Await(ctx, func() bool { return workflow.AllHandlersFinished(ctx) }` to achieve this.
-* Message handlers can be made idempotent.  See update `ClusterManager.assign_nodes_to_job`.
+Follow [the root setup](../README.md#setup), start a local Temporal server, then
+run these commands from the repository root in separate worker/starter terminals:
 
-To run, first see [README.md](../README.md) for prerequisites.
+```sh
+mkdir -p bin
+tgo build -o bin/safe_message_handler-worker ./safe_message_handler/worker
+./bin/safe_message_handler-worker
+```
 
-Then, run the following from this directory to run the worker:
+```sh
+tgo run ./safe_message_handler/starter
+```
 
-    mkdir -p bin
-    tgo build -o bin/safe_message_handler-worker safe_message_handler/worker/main.go
-    ./bin/safe_message_handler-worker
-
-Then, in another terminal, run the following to execute the workflow:
-
-    tgo run safe_message_handler/starter/main.go
-
-This will start a worker to run your workflow and activities, then start a ClusterManagerWorkflow and put it through its paces.
+Package tests: `tgo test ./safe_message_handler`.

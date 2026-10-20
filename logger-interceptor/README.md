@@ -4,7 +4,7 @@ This sample shows how to make a worker interceptor that intercepts workflow and 
 the logger.
 
 ### Steps to run this sample:
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 2) Run the following command to start the worker
 ```
 mkdir -p bin

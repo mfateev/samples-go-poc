@@ -4,7 +4,7 @@ This sample creates a custom span on the client and then initiates an Update, pr
 
 ### Run the sample
 
-1. Run a [Temporal Service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1. Run a [Temporal Service](../../README.md#setup).
 
 2. Start Jaeger from the repository root:
 

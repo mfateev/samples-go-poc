@@ -19,10 +19,10 @@ Note that individual Activity retries are not recorded in Workflow History, so w
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-tgo build -o bin/infrequent-worker infrequent/worker/main.go
+tgo build -o bin/infrequent-worker ./polling/infrequent/worker
 ./bin/infrequent-worker
 ```
 3) Run the following command to start the example
 ```
-tgo run infrequent/starter/main.go
+tgo run ./polling/infrequent/starter
 ```

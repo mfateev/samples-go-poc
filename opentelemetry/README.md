@@ -1,5 +1,5 @@
 ### Steps to run this sample:
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 
 One way could be just to use the Temporal CLI.
 

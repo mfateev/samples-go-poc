@@ -15,7 +15,7 @@ which supplements this sample and can be used to handle the transaction and paym
 portion of this shopping cart scenario.
 
 ### Steps to run this sample:
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 
     NOTE: frontend.enableExecuteMultiOperation=true must be configured for the server
 in order to use Update-with-Start. For example:

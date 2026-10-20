@@ -3,7 +3,7 @@
 This sample shows how to compress payloads using a GRPC proxy. This allows managing the codec(s) centrally rather than needing to configure each client/worker.
 
 ### Steps to run this sample:
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 2) `grpc-proxy/` is a separate Go module. Run all commands below from the `grpc-proxy/` directory:
 ```
 cd grpc-proxy

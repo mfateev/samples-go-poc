@@ -3,7 +3,11 @@ It shows both sync and async (workflow-backed) operations, and how to use the `L
 
 The starter and worker connect to two different namespaces (a "caller" namespace and a "handler" namespace) — this mirrors how Nexus is typically used to cross namespace boundaries. The client is configured via the SDK's [environment configuration](https://docs.temporal.io/develop/environment-configuration) support, which reads `TEMPORAL_NAMESPACE`, `TEMPORAL_ADDRESS`, etc. from the environment (and optionally profiles from `temporal.toml`).
 
-## Note: Standalone Nexus operations require a server version that supports this feature. Use the dev server build at https://github.com/temporalio/cli/releases/tag/v1.7.4-standalone-nexus-operations.
+## Server capability
+
+The server/CLI must support standalone Nexus operations, listing and counting.
+These clients/workers run on the host SDK; any handler workflow is still built
+with the matching native tgo.
 
 ## Run locally against a dev server
 
@@ -27,10 +31,9 @@ The starter and worker connect to two different namespaces (a "caller" namespace
 3) In a new terminal, start the worker in the handler namespace:
 
 ```bash
-TEMPORAL_NAMESPACE=my-handler-namespace \
-  mkdir -p bin
-  tgo build -o bin/nexus-standalone-operations-worker nexus-standalone-operations/worker/main.go
-  ./bin/nexus-standalone-operations-worker
+mkdir -p bin
+tgo build -o bin/nexus-standalone-operations-worker ./nexus-standalone-operations/worker
+TEMPORAL_NAMESPACE=my-handler-namespace ./bin/nexus-standalone-operations-worker
 ```
 
 You should see a log line similar to:

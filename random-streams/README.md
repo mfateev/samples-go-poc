@@ -22,7 +22,7 @@ Repeated queries return the same next choice without changing the workflow strea
 
 These generators are predictable. Use host activities for cryptographic secrets.
 
-Follow the [tgo installation and repository setup](../README.md#1-install-tgo-on-linux-or-macos)
+Follow the [tgo installation and repository setup](../README.md#setup)
 first. With `tgo` on PATH and a Temporal server at `localhost:7233`, run from the
 repository root:
 

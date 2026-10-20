@@ -1,58 +1,23 @@
-* The sample demonstrates how to deal with multiple signals that can come out of order and require actions
-* if a certain signal not received in a specified time interval.
+# Ordered signals with native select
 
-This specific sample receives three signals: Signal1, Signal2, Signal3. They have to be processed in the
-sequential order, but they can be received out of order.
-There are two timeouts to enforce.
-The first one is the maximum time between signals.
-The second limits the total time since the first signal received.
+AwaitSignalsWorkflow receives Signal1, Signal2 and Signal3 on typed native
+channels. One Go select loop records early arrivals and processes them in order.
+Consumed signal channels become nil. A resettable time.Timer bounds the next
+required signal by SignalToSignalTimeout and the remaining FromFirstSignalTimeout.
+Context cancellation and timer expiry return errors. There is no SDK Selector or
+Await coroutine in this implementation.
 
-A naive implementation of such use case would use a single loop that contains a Selector to listen on three
-signals and a timer. Something like:
+Follow [the root setup](../README.md#setup), start a local Temporal server, then
+run these commands from the repository root in separate worker/starter terminals:
 
-	for {
-		selector := workflow.NewSelector(ctx)
-		selector.AddReceive(workflow.GetSignalChannel(ctx, "Signal1"), func(c workflow.ReceiveChannel, more bool) {
-			// Process signal1
-		})
-		selector.AddReceive(workflow.GetSignalChannel(ctx, "Signal2"), func(c workflow.ReceiveChannel, more bool) {
-			// Process signal2
-		}
-		selector.AddReceive(workflow.GetSignalChannel(ctx, "Signal3"), func(c workflow.ReceiveChannel, more bool) {
-			// Process signal3
-		}
-		cCtx, cancel := workflow.WithCancel(ctx)
-		timer := workflow.NewTimer(cCtx, timeToNextSignal)
-		selector.AddFuture(timer, func(f workflow.Future) {
-			// Process timeout
-		})
-		selector.Select(ctx)
-	    cancel()
-      // break out of the loop on certain condition
-	}
-
-The above implementation works. But it quickly becomes pretty convoluted if the number of signals
-and rules around order of their arrivals and timeouts increases.
-
-The following example demonstrates an alternative approach. It receives signals in a separate goroutine.
-Each signal handler just updates a correspondent shared variable with the signal data.
-The main workflow function awaits the next step using `workflow.AwaitWithTimeout` using condition composed of
-the shared variables. This makes the main workflow method free from signal callbacks and makes the business logic
-clear.
-
-### Steps to run this sample:
-
-1) You need a Temporal service running. See details in README.md
-2) Run the following command to start the worker
-
-```
+```sh
 mkdir -p bin
-tgo build -o bin/await-signals-worker await-signals/worker/main.go
+tgo build -o bin/await-signals-worker ./await-signals/worker
 ./bin/await-signals-worker
 ```
 
-3) Run the following command to start the workflow and send signals in random order
+```sh
+tgo run ./await-signals/starter
+```
 
-```
-tgo run await-signals/starter/main.go
-```
+Package tests: `tgo test ./await-signals`.

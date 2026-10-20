@@ -12,10 +12,10 @@ StartToClose timeout.
 2) Run the following command to start the worker
 ```
 mkdir -p bin
-tgo build -o bin/frequent-worker frequent/worker/main.go
+tgo build -o bin/frequent-worker ./polling/frequent/worker
 ./bin/frequent-worker
 ```
 3) Run the following command to start the example
 ```
-tgo run frequent/starter/main.go
+tgo run ./polling/frequent/starter
 ```

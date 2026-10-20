@@ -4,7 +4,7 @@ It also shows you how to use the `ListActivities` and `CountActivities` APIs.
 **Note: Temporal CLI support for Standalone Activities requires CLI version 1.9.0.** See setup guide: https://docs.temporal.io/cli/setup-cli
 
 ### Steps to run this sample (with expected output):
-1) Run a [Temporal server](https://github.com/temporalio/samples-go/tree/main/#how-to-use). (If you are going to run locally, you will want to start it in another terminal; this command is blocking and runs until it receives a SIGINT (Ctrl + C) command.)
+1) Run a [Temporal server](../../README.md#setup). (If you are going to run locally, you will want to start it in another terminal; this command is blocking and runs until it receives a SIGINT (Ctrl + C) command.)
 
 
 If you used the above instructions to start the server, you should see a line about the CLI, Server and UI versions, and one line each for the Server URL, UI URL and Metrics endpoint. It should look something like this:

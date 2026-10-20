@@ -14,7 +14,7 @@ the activity is not completed yet.
 * After the wait activity is completed, it does the payment for the expense (UI step in this sample case).
 
 This sample relies on an a sample expense system to work.
-Get a Temporal service running [here](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+Get a Temporal service running [here](../README.md#setup).
 
 # Steps To Run Sample
 * You need a Temporal service running. README.md for more details.

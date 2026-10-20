@@ -9,7 +9,7 @@ To see a basic use of external env config, see the [hello world sample](./../hel
 
 ### Running
 
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 2) Run the following command to start the worker
 ```
 mkdir -p bin

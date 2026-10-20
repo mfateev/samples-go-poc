@@ -4,13 +4,13 @@ A helper structure that supports blocking sleep that can be rescheduled at any m
 
 Demonstrates:
 
-* Timer and its cancellation
-* Signal Channel
-* Selector used to wait on both timer and channel
+* A native time.Timer with Stop/Reset
+* A typed native time.Time signal channel
+* Go select over timer, update and context cancellation channels
 
 ### Steps to run this sample:
 
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 2) Run the following command to start the worker
 
 ```
@@ -30,3 +30,5 @@ tgo run updatabletimer/starter/main.go
 ```
 tgo run updatabletimer/updater/main.go
 ```
+Timer Stop/Reset suppress local delivery; an already issued host timer is not
+canceled by this POC. Run commands from the repository root after setup.

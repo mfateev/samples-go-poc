@@ -1,20 +1,22 @@
-This sample workflow demonstrates how to execute multiple activities in parallel and merge their results using futures.
-The futures are awaited using Selector. It allows processing them as soon as they become ready. See `split-merge-future`
-sample to see how to process them without Selector in the order of activity invocation instead.
+# Merge activities in completion order
 
-### Steps to run this sample:
+This workflow schedules activities and starts native goroutines to wait on
+their futures. A completion channel and native select collect results as they
+arrive, alongside cancellation. The directory name describes the sample family;
+this port uses Go channels, not an SDK Selector. Compare splitmerge-future, which
+waits on futures in scheduling order.
 
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
-2) Run the following command to start the worker
+Follow [the root setup](../README.md#setup), start a local Temporal server, then
+run these commands from the repository root in separate worker/starter terminals:
 
-```
+```sh
 mkdir -p bin
-tgo build -o bin/splitmerge-selector-worker splitmerge-selector/worker/main.go
+tgo build -o bin/splitmerge-selector-worker ./splitmerge-selector/worker
 ./bin/splitmerge-selector-worker
 ```
 
-3) Run the following command to start the example
+```sh
+tgo run ./splitmerge-selector/starter
+```
 
-```
-tgo run splitmerge-selector/starter/main.go
-```
+Package tests: `tgo test ./splitmerge-selector`.

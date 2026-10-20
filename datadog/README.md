@@ -1,4 +1,6 @@
-This sample shows how to use Temporal's Datadog interceptor to add tracing to your worker and clients.
+The worker constructs a private native tracing interceptor through a marked
+factory and sends spans to the host Datadog v2 exporter. Client and activity
+interceptors remain on the host. Workflow state never retains a host tracer.
 
 ### Setup
 
@@ -32,7 +34,7 @@ For documentation on how to configure your Datadog agent to upload logs see:
 https://docs.datadoghq.com/logs/log_collection/go/
 
 ### Steps to run this sample:
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 2) Run the following command to start the worker
 ```
 mkdir -p bin
@@ -42,3 +44,5 @@ tgo build -o bin/datadog-worker datadog/worker/main.go
 3) Run the following command to start the example
 ```
 tgo run datadog/starter/main.go
+
+```

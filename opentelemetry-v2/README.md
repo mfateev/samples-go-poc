@@ -17,4 +17,5 @@ through your code.
 - [Workflow-to-Activity propagation](workflow-activity-propagation)
 - [Client-to-Update propagation](client-update-propagation)
 
-Shared setup lives in [`setup.go`](setup.go)
+Shared host setup lives in [`setup/setup.go`](setup/setup.go). Native workflow
+interceptor factories and copied span export use the POC tracing integration.

@@ -7,7 +7,7 @@ arguments will be rejected by the `fetch_and_add`'s associated validator and
 thus will not be included in the workflow history.
 
 ### Steps to run this sample:
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 2) Run the following command to start the worker
 ```
 mkdir -p bin

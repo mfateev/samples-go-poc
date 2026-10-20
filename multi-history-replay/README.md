@@ -1,7 +1,7 @@
 This sample demonstrates getting multiple workflow histories and replaying them.
 
 ### Steps to run this sample:
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 2) Run the following command to start the worker
 ```shell script
 mkdir -p bin

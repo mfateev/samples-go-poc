@@ -16,13 +16,13 @@ any Workflow/Activity definitions.
   CloudFormation stacks
 - mTLS client certificate and key for your Temporal namespace (place as `client.pem` and
   `client.key` in this directory). See more [here](https://docs.temporal.io/cloud/certificates).
-- Go 1.25+
+- Matching tgo and the sibling SDK/host-SDK workspace from [root setup](../README.md#setup)
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `main.go` | Lambda worker entry point -- configures the worker, registers Workflows/Activities, and starts the Lambda handler |
+| `worker/main.go` | Lambda worker entry point -- configures the worker, registers Workflows/Activities, and starts the Lambda handler |
 | `greeting/workflow.go` | Sample Workflow that executes a greeting Activity |
 | `greeting/activity.go` | Sample Activity that returns a greeting string |
 | `starter/main.go` | Helper program to start a Workflow execution against the Lambda worker |
@@ -38,9 +38,9 @@ any Workflow/Activity definitions.
 The instructions here are a slimmed down version of the more complete getting started guide which
 you can find [here](https://docs.temporal.io/production-deployment/worker-deployments/serverless-workers/aws-lambda).
 
-### 1. Create a lambda function for your Python worker
+### 1. Create a custom-runtime Lambda function
 
-Use either the AWS web UI or CLI to create a Python runtime Lambda function. Ex:
+Create a provided.al2023 function for the Go bootstrap executable:
 
 ```bash
 aws lambda create-function \
@@ -88,12 +88,18 @@ for more.
 
 ### 5. Deploy the Lambda function
 
-```bash
-./deploy-lambda.sh <function-name>
+The checked-in deploy-lambda.sh invokes stock Go. For the native POC use this
+build/package sequence from lambda-worker with matching tgo on PATH:
+
+```sh
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 tgo build -tags lambda.norpc -o bootstrap ./worker
+zip function.zip bootstrap client.pem client.key temporal.toml otel-collector-config.yaml
+aws lambda update-function-code --function-name <function-name> --zip-file fileb://function.zip
 ```
 
-This cross-compiles for Linux/amd64, bundles the binary with configuration files, and
-uploads to AWS Lambda.
+This builds the native workflow entry metadata as well as the host Lambda
+handler. Match the function architecture to the artifact. Cloud deployment and
+collector behavior require their own environment; unit tests do not deploy them.
 
 ### 6. Configure Temporal to be able to invoke your lambda function
 

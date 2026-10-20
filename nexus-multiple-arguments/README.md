@@ -1,4 +1,4 @@
-# Nexus Context Propagation
+# Nexus multiple arguments
 
 This sample shows how to map a Nexus operation to a caller workflow that takes multiple input arguments using [temporalnexus.NewWorkflowRunOperationWithOptions](https://pkg.go.dev/go.temporal.io/sdk/temporalnexus#MustNewWorkflowRunOperationWithOptions)
 

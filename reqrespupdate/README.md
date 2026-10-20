@@ -8,7 +8,7 @@ This sample demonstrates how to send a request and get a response from a Tempora
 
 Follow the below steps to run this sample:
 
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use). Note, update is only supported on [Temporal Server v1.21](https://github.com/temporalio/temporal/releases/tag/v1.21.0)
+1) Run a [Temporal service](../README.md#setup). Note, update is only supported on [Temporal Server v1.21](https://github.com/temporalio/temporal/releases/tag/v1.21.0)
 
 2) Update functionality is disabled by default but can be enabled per Namespace by setting the `frontend.enableUpdateWorkflowExecution` flag to true for that Namespace in dynamic config.
 

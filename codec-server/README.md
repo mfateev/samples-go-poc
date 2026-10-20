@@ -5,7 +5,7 @@ The sample codec server supports OIDC authentication (via JWT in the Authorizati
 Temporal UI can be configured to pass the user's OIDC access token to the codec server, see: https://docs.temporal.io/references/web-ui-configuration#auth
 Configuring OIDC is outside the scope of this sample, but please see the [serverjwtauth repo](../serverjwtauth/) for more details about authentication.
 
-1) Run a [Temporal service](https://github.com/temporalio/samples-go/tree/main/#how-to-use).
+1) Run a [Temporal service](../README.md#setup).
 2) `codec-server/` is a separate Go module. Run all `tgo run` commands below from the `codec-server/` directory:
    ```
    cd codec-server
@@ -38,9 +38,9 @@ Configuring OIDC is outside the scope of this sample, but please see the [server
 
 ## Summary
 
-This document outlines the HTTP protocol for codec servers. This functionality allows users to deploy a codec centrally
-rather than the previous architecture that required a `Temporal CLI` plugin on developer workstations. This makes
-it easier to secure access to any required encryption keys and simplifies the developer experience.
+This document outlines the HTTP protocol for codec servers. A centrally deployed codec serves encode/decode requests for clients, the CLI
+and UI. Keys and remote I/O remain in the host codec service; native workflows
+use their matching private value serializer.
 
 ## Protocol
 

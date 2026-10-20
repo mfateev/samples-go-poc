@@ -1,279 +1,72 @@
-# Temporal Go samples on the isolate POC SDK
+# Native Go Temporal samples
 
-This checkout includes **76 of the 83 sample groups** from
-[Temporal's samples-go at d378442](https://github.com/temporalio/samples-go/tree/d3784428122e0cd4b28e91a0cd86b589749abf28),
-rewritten for native Go workflows in deterministic isolates. See the
-[complete migration inventory](./MIGRATION.md) for every sample, the 7 blocked
-groups and their missing features, verification commands, and deployment limits.
-The `goroutines` and [random-streams](./random-streams/) examples are additional
-POC examples. Named random streams separate choices, jitter and audit draws.
-The [dynamic-workflows](./dynamic-workflows/) sample registers one native workflow
-and one host activity as fallbacks for arbitrary runtime names.
+These applications use the native isolate SDK: context.Context, native goroutines,
+channels, select, sync and history-driven timers inside workflows. Host clients,
+activities and services use the Temporal Go SDK. [CATALOG.md](CATALOG.md) describes
+included applications and remaining application ports; SDK features and sample
+presence are separate concerns.
 
-Deterministic isolates also support `crypto/rand` and UUID v4 generation. Native
-`select` and top-level random APIs share one replay-seeded stream. These bytes
-are predictable and must never be used for keys, passwords, authentication
-tokens or cryptographic secrets; generate those in host activities or codecs.
-Normal host `crypto/rand` keeps OS entropy. See the
-[SDK's randomness and security documentation](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/README.md#deterministic-randomness-and-security)
-for seed, replay and query behavior.
-The [goroutines](./goroutines/workflow.go) example adds native Go activity
-fan-out with channels and WaitGroup.
-The adapted sample code uses the upstream Apache 2.0 license in `LICENSE`.
+## Setup
 
-**Repositories:** the modified compiler and runtime live in
-[`mfateev/golang-go`](https://github.com/mfateev/golang-go/tree/task/modify-go-runtime-for-isolates),
-the workflow API and Temporal adapter in
-[`mfateev/sdk-go-poc`](https://github.com/mfateev/sdk-go-poc/tree/task/modify-go-runtime-for-isolates),
-and these examples in
-[`mfateev/samples-go-poc`](https://github.com/mfateev/samples-go-poc/tree/task/modify-go-runtime-for-isolates).
-The SDK and samples checkouts use the `task/modify-go-runtime-for-isolates`
-branch. Install the compiler from a compatible tgo release, or build the same
-branch from source when developing compiler changes. The checked-in `go.work`
-makes the samples use the sibling SDK checkout directly, without pinning an
-isolate SDK version or commit in `go.mod`. Keep the SDK and samples beside each
-other as shown below; the binary installer provides the toolchain separately.
-The SDK development branch uses a sibling `temporal-go-sdk` checkout for its
-upstream integration hooks. The workspace override selects that same checkout
-for all samples. `sdk-go-poc/toolchain/go-source.json` records matching compiler,
-upstream SDK and sample revisions. Keep these checkouts aligned when replaying
-saved histories.
+Use sibling `golang-go`, `sdk-go-poc`, `temporal-go-sdk` and `samples-go-poc`
+checkouts. Follow the SDK's
+[clean source setup](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/README.md#install-tgo)
+to check out matching revisions from `sdk-go-poc/toolchain/go-source.json` and
+build/install tgo. Prerequisites are Git, Python 3.11+, a C compiler and bootstrap
+Go 1.26.7 or newer; published precompiled bundles need no bootstrap Go.
 
-## Go commands
+Run from this repository root after placing the matching tgo on PATH:
 
-Use standard `go` for ordinary tools such as linters and code generators.
-Use `tgo` to build, test, or run workflow and worker programs: their host code
-and workflows are linked with the same modified Go runtime. Tools that load
-workflow packages need support for the custom toolchain.
-The installed command is `tgo`. The examples below assume it is on `PATH`.
-
-## 1. Install tgo on Linux or macOS
-
-The commands below support ARM64 and x86-64 on Debian or Ubuntu Linux and
-macOS. The build and run sequence was verified on Linux ARM64. Have a few
-gigabytes of free space for the toolchain, build cache, and module cache.
-
-On Debian or Ubuntu, install Git, curl, the archive tools, and a C compiler:
-
-```sh
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl git tar coreutils build-essential python3
-```
-
-On macOS, install the Xcode Command Line Tools if they are missing:
-
-```sh
-xcode-select -p || xcode-select --install
-```
-
-Wait for the installer to finish, then verify `xcode-select -p` succeeds before
-continuing. The tools provide Git and Clang; macOS also includes curl, tar, and
-`shasum`. The following shell blocks work in Bash or the default macOS zsh.
-
-### Install a precompiled release
-
-The installer provides the complete compiler and runtime for macOS and Linux
-on arm64 and amd64. An existing Go installation is not required.
-
-**Release availability:** the commands below require a published
-[tgo release](https://github.com/mfateev/sdk-go-poc/releases). Until the first
-release is published, use the source build below.
-
-```sh
-curl -fsSL https://github.com/mfateev/sdk-go-poc/releases/latest/download/install.sh -o install-tgo.sh
-sh install-tgo.sh
-export PATH="$HOME/.local/bin:$PATH"
+```bash
 tgo version
-tgo env GOTOOLCHAIN
-```
-
-The installer detects the platform, verifies the archive's SHA-256 checksum,
-and installs under `$HOME/.local/lib/tgo/<tag>/go`, with a launcher at
-`$HOME/.local/bin/tgo`. Add the PATH line to your shell startup file so every
-terminal used below can find `tgo`. The launcher selects the bundled runtime
-and sets `GOTOOLCHAIN=local`; the last command should print `local`.
-
-To pin a version, choose a published tag from Releases. `tgo-v0.1.0` here is an
-example. Prereleases require the tag-specific installer URL; `latest` selects
-stable releases.
-
-```sh
-TGO_VERSION=tgo-v0.1.0
-curl -fsSL "https://github.com/mfateev/sdk-go-poc/releases/download/$TGO_VERSION/install.sh" -o install-tgo.sh
-sh install-tgo.sh --version "$TGO_VERSION"
-```
-
-Pass `--prefix "$HOME/tools"` to install elsewhere, then add `$HOME/tools/bin`
-to PATH. Installing a new tag updates the launcher and retains older versions.
-To reinstall the same tag, remove its directory under your prefix's `lib/tgo`
-first. For Homebrew or offline installation, see the
-[toolchain installation guide](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/toolchain/DISTRIBUTION.md).
-
-<details>
-<summary>Build tgo from source before the first release or for compiler development</summary>
-
-The fork is Go 1.28 development source and requires Go 1.26.0 or newer for
-bootstrapping. These commands install Go 1.26.7 into a new directory under
-your home directory. The SHA-256 values are from [the Go downloads page](https://go.dev/dl/).
-
-```bash
-set -e
-POC_ROOT="$HOME/temporal-isolates-poc"
-mkdir -p "$POC_ROOT"
-test ! -e "$POC_ROOT/go"
-test ! -e "$POC_ROOT/golang-go"
-
-case "$(uname -s)/$(uname -m)" in
-  Linux/aarch64|Linux/arm64)
-    POC_PLATFORM=linux
-    POC_ARCH=arm64
-    POC_GO_SHA=5a4ec883379d51ee9ce1040d5e87f8d35e20387574dd8c947feb01eabc3c1b37
-    ;;
-  Linux/x86_64|Linux/amd64)
-    POC_PLATFORM=linux
-    POC_ARCH=amd64
-    POC_GO_SHA=ffb5f8de10c62550dfddab66b36b57030721e0a44a3218e9e1181d7b59f121ca
-    ;;
-  Darwin/arm64)
-    POC_PLATFORM=darwin
-    POC_ARCH=arm64
-    POC_GO_SHA=020a1e8224811be75163e920bc77e0926a1390a6aeea19bdcf23f74b9d749f6d
-    ;;
-  Darwin/x86_64)
-    POC_PLATFORM=darwin
-    POC_ARCH=amd64
-    POC_GO_SHA=92e8b34bff3c89ab16404c595669ac8cb004cc2f676dcbd1f5b87a6b8def3b47
-    ;;
-  *) echo "This guide supports Linux or macOS on ARM64 or x86-64" >&2; exit 1 ;;
-esac
-
-POC_GO_ARCHIVE="$POC_ROOT/go1.26.7.$POC_PLATFORM-$POC_ARCH.tar.gz"
-curl -fL --retry 3 -o "$POC_GO_ARCHIVE" "https://go.dev/dl/go1.26.7.$POC_PLATFORM-$POC_ARCH.tar.gz"
-if [ "$POC_PLATFORM" = darwin ]; then
-  printf '%s  %s\n' "$POC_GO_SHA" "$POC_GO_ARCHIVE" | shasum -a 256 -c -
-else
-  printf '%s  %s\n' "$POC_GO_SHA" "$POC_GO_ARCHIVE" | sha256sum -c -
-fi
-tar -C "$POC_ROOT" -xzf "$POC_GO_ARCHIVE"
-"$POC_ROOT/go/bin/go" version
-```
-
-Build the SDK-owned toolchain from its pinned Go source (Python 3.11+ required):
-
-```bash
-git clone --branch task/modify-go-runtime-for-isolates \
-  https://github.com/mfateev/sdk-go-poc.git "$POC_ROOT/sdk-go-poc"
-cd "$POC_ROOT/sdk-go-poc"
-GOROOT_BOOTSTRAP="$POC_ROOT/go" python3 toolchain/build.py --output "$POC_ROOT/golang-go"
-export PATH="$POC_ROOT/golang-go/bin:$POC_ROOT/go/bin:$PATH"
-export GOTOOLCHAIN=local
-tgo version
-cd "$POC_ROOT"
-```
-
-The toolchain contains a conventional `bin/go` and an SDK-owned `bin/tgo`.
-`tgo` selects and verifies the isolate experiment before building workflows.
-For an explicit local compiler checkout, use `toolchain/build.py --source PATH
---local` instead. Add the PATH settings to your shell startup file.
-
-</details>
-
-## 2. Clone the SDK and samples
-
-Continue in the same terminal. The samples' workspace requires the SDK checkout
-beside the samples checkout:
-
-```bash
-POC_ROOT="$HOME/temporal-isolates-poc"
-mkdir -p "$POC_ROOT"
-test -d "$POC_ROOT/sdk-go-poc/.git" || git clone --branch task/modify-go-runtime-for-isolates \
-  https://github.com/mfateev/sdk-go-poc.git "$POC_ROOT/sdk-go-poc"
-git clone https://github.com/mfateev/temporal-go-sdk.git "$POC_ROOT/temporal-go-sdk"
-POC_SDK_REV=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["temporal_sdk_revision"])' "$POC_ROOT/sdk-go-poc/toolchain/go-source.json")
-git -C "$POC_ROOT/temporal-go-sdk" checkout "$POC_SDK_REV"
-git clone --depth 1 --single-branch --branch task/modify-go-runtime-for-isolates \
-  https://github.com/mfateev/samples-go-poc.git "$POC_ROOT/samples-go-poc"
-export GOCACHE="$POC_ROOT/go-build-cache"
-mkdir -p "$GOCACHE"
-cd "$POC_ROOT/samples-go-poc"
-tgo env GOCACHE GOWORK
-```
-
-Go's build cache accounts for compiler changes, so a separate cache is optional.
-This `GOCACHE` makes cleanup targeted; source builds manage their own bootstrap
-cache. The printed workspace path should end in `samples-go-poc/go.work`. That
-file loads this module, `../sdk-go-poc`, `./codec-server`, and `./grpc-proxy`.
-The samples use the SDK branch's checked-out source. Go module requirements
-accept versions rather than branch names; the workspace selects the local SDK.
-Use `tgo` for all builds, tests, and runs below.
-
-To update an existing checkout, first commit or stash local edits, then run:
-
-```bash
-git -C "$POC_ROOT/sdk-go-poc" pull --ff-only origin task/modify-go-runtime-for-isolates
-git -C "$POC_ROOT/samples-go-poc" pull --ff-only origin task/modify-go-runtime-for-isolates
-```
-
-Install a newer compatible tgo release when needed using step 1.
-
-<details>
-<summary>Update a compiler built from source</summary>
-
-The SDK pin selects the compiler revision. After updating the SDK, build a new
-pinned toolchain into an empty directory and update PATH:
-
-```bash
-cd "$POC_ROOT/sdk-go-poc"
-GOROOT_BOOTSTRAP="$POC_ROOT/go" python3 toolchain/build.py --output "$POC_ROOT/golang-go-next"
-export PATH="$POC_ROOT/golang-go-next/bin:$PATH"
-cd "$POC_ROOT/samples-go-poc"
-```
-
-Use the SDK source pin to update the sibling `temporal-go-sdk` checkout too.
-
-</details>
-
-Then repeat the builds in step 3. Pulling the SDK branch updates the source
-used by the workspace; no `go get` or SDK version edit is needed.
-
-## 3. Build the sample workers and the replayer
-
-Run from `samples-go-poc` after the previous step:
-
-```bash
+tgo env GOROOT GOWORK
 tgo mod download
-tgo test -p 3 ./... ./codec-server/... ./grpc-proxy/...
+tgo test -p=2 ./... ./codec-server/... ./grpc-proxy/...
+sample_build_dir=$(mktemp -d)
+while IFS= read -r sample_package; do
+    if [ -n "$sample_package" ]; then
+        tgo build -p=2 -o "$sample_build_dir/program" "$sample_package" || exit
+    fi
+done < <(tgo list -f '{{if eq .Name "main"}}{{.ImportPath}}{{end}}' ./... ./codec-server/... ./grpc-proxy/...)
+```
+
+GOWORK should identify this checkout's `go.work`. It includes the root samples,
+sibling SDK and nested codec-server/grpc-proxy modules; its replacement selects
+the sibling host SDK fork. A root wildcard alone omits the nested modules. The loop builds one executable
+at a time so native registration is actually generated; a multi-package build
+only compiles packages and does not exercise that linking path.
+Cloud collectors/deployments need additional infrastructure documented per sample.
+Unit/build success does not establish those deployments work.
+
+`tgo build`, `tgo test` and `tgo run` discover workflow markers, including test-only
+entries. Run builds a temporary marked executable. Stock Go and `tgo install`
+do not generate native entry registration. Marked test coverage mode is unsupported.
+
+## First application
+
+Install Temporal CLI separately and start a development server in one terminal:
+
+```sh
+temporal server start-dev --headless
+```
+
+From this repository root in another terminal:
+
+```sh
 mkdir -p bin
 tgo build -o bin/helloworld-worker ./helloworld/worker
-tgo build -o bin/choice-worker ./choice-exclusive/worker
-tgo build -o bin/sleep-for-days-worker ./sleep-for-days/worker
-tgo build -o bin/goroutines-worker ./goroutines/worker
-tgo build -o bin/goroutines-starter ./goroutines/starter
-tgo build -o bin/replay ./replay
+./bin/helloworld-worker
 ```
 
-Workflow functions carry a `//temporal:workflow` directive. Workers import them and use
-the POC SDK's `worker.New` and normal `RegisterWorkflow(fn)` API. The build
-discovers marked functions through the host's imports and generates typed
-invokers and per-instance state factories. No isolate config, workflow `main`,
-or special build flags are needed. Workflows use `context.Context`, native
-goroutines, channels, `select`, and timers. `workflow.GetSignalChannel[T]`
-returns the signal type directly through a native `<-chan T`. Map iteration is
-deterministic inside an isolate.
+From a third terminal in the same checkout:
 
-Activities, clients, and workers run on the host. Host clients start native
-workflows by their registered string names: the upstream SDK client recognizes
-only `workflow.Context` when validating a function reference. Host payload codecs support
-compression such as `snappycompress` and `codec-server`. Custom native data
-converters use a factory configured with `worker.SetIsolateDataConverter`; `pso`
-shows matching custom serialization on both sides. Application context
-propagation, context-aware serializers, arbitrary protobuf workflow values,
-and external payload storage remain migration gaps; see [MIGRATION.md](./MIGRATION.md).
-Unmarked ordinary SDK workflows retain their usual `workflow.Context` signature
-and are forwarded through the same worker API.
+```sh
+tgo run ./helloworld/starter Temporal
+```
 
-For example, the hello world worker registers `helloworld.HelloWorld`, declared in
-`helloworld/workflow.go`:
+The starter prints its workflow ID and greeting. `TEMPORAL_ADDRESS` changes this
+sample's default `localhost:7233` target. Other samples have their own documented
+flags/task queues. A native entry is an ordinary concrete function:
 
 ```go
 //temporal:workflow
@@ -287,252 +80,90 @@ func HelloWorld(ctx context.Context, name string) (string, error) {
 }
 ```
 
-Functions keep their Go signatures. The marker supports concrete top-level
-functions with ordinary Go arguments and either no returns, `error`, or
-`(result, error)`. Variadic and generic functions, methods, cgo source, and
-`workflow.Context` arguments are rejected. Build executable workers with
-`tgo build`; automatic entry generation for `tgo run`, `tgo install`, and test
-binaries remains future work. Workflow and activity definitions live in sample packages; worker and starter
-executables remain in subdirectories. Host requesters and initialization use
-separate packages where needed.
-The POC selects package state conservatively and replays selected initializers
-for each instance; workflow-reachable initialization must be suitable for that.
-The pinned host activity SDK graph initializes once in the process. Call its
-services only from host activities; workflow code uses the POC workflow API.
+Use `github.com/mfateev/sdk-go-poc/workflow` and its worker wrapper. The context
+is injected, never a serialized input. Host clients start native workflows by
+registered string name. Activities may accept context first or omit it.
 
-## 4. Install the Temporal CLI and run the samples
+## Other small examples
 
-Download Temporal CLI 1.9.1 from [Temporal's archive](https://github.com/temporalio/cli#install-via-download).
-These commands still run in the setup terminal:
+| Application | Behavior |
+| --- | --- |
+| `choice-exclusive` | Host activity chooses an order activity; workflow propagates failures |
+| `sleep-for-days` | Native select over email completion, 30-day timer, completion signal and cancellation |
+| `goroutines` | Native fan-out activities with results returned in input order |
+| `goroutine` | Native concurrent activity sequences |
+| `random-streams` | Independent named streams with replay-stable draws |
+| `dynamic-workflows` | Native fallback registration and runtime names |
+| `logger-interceptor`, `opentelemetry`, `opentelemetry-v2`, `datadog` | Private workflow interception plus host observation/export |
+| `codec-server`, `snappycompress`, `pso` | Host codecs and matching local value conversion |
+| `safe_message_handler`, `shoppingcart` | Synchronized update state and handler draining |
 
-```bash
-case "$(uname -s)" in
-  Linux) POC_PLATFORM=linux ;;
-  Darwin) POC_PLATFORM=darwin ;;
-  *) echo "Unsupported operating system" >&2; exit 1 ;;
-esac
-case "$(uname -m)" in
-  aarch64|arm64) POC_ARCH=arm64 ;;
-  x86_64|amd64) POC_ARCH=amd64 ;;
-  *) echo "Unsupported architecture" >&2; exit 1 ;;
-esac
-curl -fL --retry 3 -o "$POC_ROOT/temporal-cli.tar.gz" \
-  "https://temporal.download/cli/archive/v1.9.1?platform=$POC_PLATFORM&arch=$POC_ARCH"
-mkdir -p "$POC_ROOT/temporal-cli"
-tar -C "$POC_ROOT/temporal-cli" -xzf "$POC_ROOT/temporal-cli.tar.gz"
-"$POC_ROOT/temporal-cli/temporal" --version
-```
+For example, build a worker and run its starter from the repository root:
 
-Open four terminals. Use **Terminal 1** for an in-memory local server:
-
-```bash
-"$HOME/temporal-isolates-poc/temporal-cli/temporal" server start-dev --headless
-```
-
-Use **Terminal 2** for the hello world worker:
-
-```bash
-cd "$HOME/temporal-isolates-poc/samples-go-poc"
-./bin/helloworld-worker
-```
-
-Use **Terminal 3** for the exclusive choice worker:
-
-```bash
-cd "$HOME/temporal-isolates-poc/samples-go-poc"
-./bin/choice-worker
-```
-
-Once both workers report `Started Worker`, use **Terminal 4** for the starters:
-
-```bash
-cd "$HOME/temporal-isolates-poc/samples-go-poc"
-export GOCACHE="$HOME/temporal-isolates-poc/go-build-cache"
-tgo run ./helloworld/starter Temporal
-tgo run ./choice-exclusive/starter
-```
-
-The first starter prints `Hello Temporal!`; the second prints
-`order completed`. Each also prints its Workflow ID and Run ID. The choice
-workflow schedules `GetOrder`, then one of `OrderApple`, `OrderBanana`,
-`OrderCherry`, or `OrderOrange`. `GetOrder` chooses randomly in a host activity,
-and Temporal records that result for replay. The workflow itself returns no
-result, matching [upstream](https://github.com/temporalio/samples-go/blob/main/choice-exclusive/workflow.go).
-The worker configures an `OrderActivities` instance and registers its native
-methods directly. `ExecuteActivity(ctx, orders.GetOrder).Get(ctx, &choice)`
-reads the choice; `ExecuteActivity(ctx, selected, choice).Get(ctx, nil)` waits
-for the selected error-only activity. Both activity failures
-and unknown choices fail the workflow. `tgo test ./choice-exclusive` exercises all
-four branches, both activity failure paths, unknown choices, and configured
-activity choices. `TEMPORAL_ADDRESS` can point the
-workers and starters at another server; the default is `localhost:7233`.
-
-The typed versions of both serial samples completed on Temporal CLI 1.9.1's
-development server on Linux ARM64, and their exported histories replayed in
-fresh processes. All three sample workers and the combined replayer built with
-the SDK branch workspace.
-
-## 5. Replay the completed histories
-
-Keep the server running so the CLI can export histories. In Terminal 4, paste
-the Workflow IDs printed by the starters when prompted:
-
-```bash
-cd "$HOME/temporal-isolates-poc/samples-go-poc"
-printf 'Hello Workflow ID: '
-read -r HELLO_WORKFLOW_ID
-printf 'Choice Workflow ID: '
-read -r CHOICE_WORKFLOW_ID
-"$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
-  --workflow-id "$HELLO_WORKFLOW_ID" --output json > bin/hello-history.json
-"$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
-  --workflow-id "$CHOICE_WORKFLOW_ID" --output json > bin/choice-history.json
-./bin/replay HelloWorld bin/hello-history.json
-./bin/replay ExclusiveChoice bin/choice-history.json
-```
-
-Both replays should print `replay passed`. Use histories from the current typed
-samples; histories recorded by the earlier byte-only workflow versions use a
-different argument/result contract. The earlier Choice port also returned the
-fruit; that result was removed to match upstream. Record fresh Choice histories
-after this change. The typed activity API also changes activity payloads from
-byte encodings to native JSON strings and removes GetOrder's dummy argument;
-record fresh histories after updating these samples. The workers and server can then be stopped
-with Ctrl-C in their terminals.
-
-The first two ports use named typed workflow functions with blocking activity
-calls. Upstream `workflow.Context` and futures become ordinary Go calls inside
-the isolate. The adapter enables deterministic FIFO goroutines, reproducible
-select, canonical string/integer maps, and an exact suspension fence.
-
-## 6. Concurrent sleep-for-days fixture
-
-The [upstream `sleep-for-days` workflow](https://github.com/temporalio/samples-go/blob/main/sleep-for-days/sleepfordays_workflow.go)
-takes no workflow arguments. It schedules an email immediately and after each
-30-day timer, stopping when a `complete` signal arrives. This port also handles
-email completion through `ExecuteActivity(...).ToChannel()`. Ordinary Go
-`select` waits on email results, native `time.After(30 * 24 * time.Hour)`,
-the signal channel and context cancellation. An email failure fails the workflow;
-a successful email leaves the current timer and signal waits active. Each
-iteration selects directly on its email's result channel and waits for both
-email completion and its 30-day timer before starting the next iteration.
-If the timer fires first, the workflow keeps waiting for that email; sends
-never overlap. Signals and cancellation can finish either wait immediately.
-`SendEmail` returns only error, so
-the workflow checks `FutureResult.Err` without extracting a value. The message remains
-`"Sleeping for 30 days"`; the starter passes no arguments.
-
-The worker schedules every concurrent command before ending a Workflow Task.
-This sample completed after a signal against Temporal CLI 1.9.1 on Linux ARM64;
-its exported history replayed in fresh processes at GOMAXPROCS 1, 2, and 8.
-The SDK's concurrent fixture separately checks firing a native one-second
-timer alongside two activities. Native cross-architecture replay remains a
-release gate.
-
-`tgo test ./sleep-for-days` enables deterministic dispatch with a direct isolate
-host to check the no-argument entry, repeated 30-day timers, completion signals,
-both email-first and timer-first completion, no overlapping sends, completion
-signals with either wait pending, propagated immediate and late email failures,
-and workflow cancellation.
-
-Run the fixture from `samples-go-poc` with the server started as in step 4:
-
-```bash
-./bin/sleep-for-days-worker
-```
-
-In another terminal, start the workflow and send its completion signal using
-the Workflow ID printed by the starter:
-
-```bash
-cd "$HOME/temporal-isolates-poc/samples-go-poc"
-tgo run ./sleep-for-days/starter
-"$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow signal \
-  --workflow-id YOUR_WORKFLOW_ID --name complete
-"$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
-  --workflow-id YOUR_WORKFLOW_ID --output json > bin/sleep-for-days-history.json
-./bin/replay SleepForDays bin/sleep-for-days-history.json
-```
-
-The expected final result is `done` and `replay passed: SleepForDays`.
-The port now propagates email failures and waits for each send before starting
-the next iteration. Histories that previously ignored a failed email or
-scheduled overlapping sends need a versioned workflow change or a fresh
-execution. The workflow input and successful result contracts are unchanged.
-
-## 7. Native goroutines and activity fan-out
-
-`GreetAll(names []string) ([]string, error)` uses an explicit `go` statement for
-each name. Every goroutine calls a blocking activity API and sends its result
-through an ordinary unbuffered Go channel. A separate goroutine waits on
-`sync.WaitGroup` and closes that channel. The workflow returns greetings in
-input order regardless of activity completion order, or propagates an activity
-error. It uses the same marked-function and worker registration APIs as the
-other samples.
-
-With the server from step 4 running, start the worker in one terminal:
-
-```bash
-cd "$HOME/temporal-isolates-poc/samples-go-poc"
+```sh
+tgo build -o bin/goroutines-worker ./goroutines/worker
 ./bin/goroutines-worker
 ```
 
-Start it from another terminal:
+In another terminal: `tgo run ./goroutines/starter Ada Grace Linus`.
+See each sample's README for additional services and inputs.
 
-```bash
-cd "$HOME/temporal-isolates-poc/samples-go-poc"
-./bin/goroutines-starter Ada Grace Linus
-```
+## Replay and tests
 
-It prints the Workflow ID followed by `Hello Ada!`, `Hello Grace!`, and
-`Hello Linus!`. Export that ID and replay in a fresh process:
-
-```bash
-"$HOME/temporal-isolates-poc/temporal-cli/temporal" workflow show \
-  --workflow-id YOUR_WORKFLOW_ID --output json > bin/goroutines-history.json
-./bin/replay GreetAll bin/goroutines-history.json
-```
-
-`tgo test ./goroutines` checks empty input, concurrent activity
-scheduling, completions delivered in reverse order, and activity errors with
-GOMAXPROCS 1, 2, and 8. Live execution and fresh-process replay at those three
-settings passed on Linux ARM64; the replayer also compares the greeting result
-with the recorded history.
-
-If you need to reclaim disk space after all Go commands finish, clear only
-the POC build cache:
+Build the combined small-sample replayer and export a completed history:
 
 ```sh
-GOCACHE="$HOME/temporal-isolates-poc/go-build-cache" \
-  tgo clean -cache
+tgo build -o bin/replay ./replay
+temporal workflow show --workflow-id YOUR_WORKFLOW_ID --output json > bin/history.json
+./bin/replay HelloWorld bin/history.json
 ```
 
-### SDK-compatible activities
+It also registers ExclusiveChoice, SleepForDays and GreetAll. Use the matching
+registered name and input/result contract. Replay is a required application
+change check, not a promise of general compatibility with every SDK history.
+Do not remove executable saved-history fixtures as documentation cleanup.
 
-All samples use `WithActivityOptions(ctx, ActivityOptions{...})` followed by
-`ExecuteActivity(ctx, activity, args...).Get(ctx, &result)`. Activity references
-or literal registered names accept the same inputs as the current Go SDK.
-Error-only activities use `Get(ctx, nil)`. Every activity takes standard
-`context.Context` first; the worker supplies its host context. Workflow contexts
-remain inside their isolates. Activities never run inside workflows.
+Tests use the native SDK TestWorkflowEnvironment with host virtual time and
+activities/mocks. Supply `t` or `s.T()` when creating the environment for cleanup.
+Register workflows before SDK mock controls that need registration metadata.
+Host mock callbacks cannot call native workflow APIs; ReturnIsolate selects a
+marked native replacement. Decode copied update results through testsuite helpers.
 
-Helloworld preserves its `HelloWorldActivity` registration alias, including
-replay metadata. Choice-exclusive uses method references and its registered
-host receiver. Sleep-for-days selects on email activity completion alongside
-its signal and timer and propagates email errors.
-Goroutines uses `ExecuteActivity(...).Get(ctx, &greeting)` inside ordinary Go
-goroutines and sends ordered results through native channels. Use
-`Future.ToChannel()` when selecting directly on a future alongside other
-channels or timers. The earlier typed activity calls remain
-commented out in the SDK pending future API work.
+Selected live tests are opt-in:
 
-### Workflow cancellation
+```sh
+SAMPLES_DEV_SERVER=1 tgo test -count=1 -v ./helloworld
+SAMPLES_DEV_SERVER=1 tgo test -count=1 -v ./dynamic-workflows
+SAMPLES_DEV_SERVER=1 tgo test -count=1 -v ./nexus-standalone-activity ./nexus-standalone-operations
+```
 
-All sample workflows take `context.Context` first and pass it to their activity
-calls. The SDK cancels that context when Temporal requests workflow cancellation.
-The sleep-for-days sample selects on `ctx.Done()` alongside its signal and timer.
-Child contexts and `context.WithTimeout` work with deterministic history time;
-activities use their own host context and should heartbeat for prompt cancellation.
-The context parameter is injected by the SDK and is never included in CLI inputs
-or serialized payloads. Context parameters leave the input and result contracts
-unchanged; see the sample-specific notes above for workflow behavior changes.
+SDK [TESTING.md](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/TESTING.md)
+explains deeper compiled/race/replay and cache-enabled/disabled checks.
+
+## Workflow rules
+
+Selected package globals and allocations are private to each execution. Pass
+configuration as inputs or copied factory config; keep filesystem, environment,
+network and secrets on the host. Google protobuf, native context propagation,
+custom data/failure converters, dynamic handlers and workflow streams are supported
+by the SDK. External payload references and variadic handlers remain outside its
+native contract. Complete applications using every supported feature need not
+be present here; see the catalog.
+
+Supported maps/select/random/time are deterministic. Use native Go synchronization
+correctly. Random bytes, including crypto-named APIs, are predictable replay data.
+Queries/validators read workflow state and mutate only scratch values. Runtime
+ownership/effect/resource faults fail the Workflow Task and cannot be recovered
+into application progress. Non-yielding code has no hard-kill guarantee.
+
+Wait for accepted update handlers with workflow.WaitHandlersFinished before
+returning or continuing as new; separately drain admitted signals and coordinate
+signal goroutines. Native timer Stop/Reset suppress local delivery but do not
+cancel an already issued host timer. Matching serializers/codecs/propagators are
+needed on both host and native sides.
+
+For the compiler/runtime algorithms and a guide to reimplementing the POC, start
+at the Go fork's
+[documentation index](https://github.com/mfateev/golang-go/blob/task/modify-go-runtime-for-isolates/doc/isolates/README.md)
+and the SDK's
+[implementation guide](https://github.com/mfateev/sdk-go-poc/blob/task/modify-go-runtime-for-isolates/IMPLEMENTATION.md).

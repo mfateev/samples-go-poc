@@ -1,6 +1,6 @@
 # nexus
 
-Temporal Nexus is a new feature of the Temporal platform designed to connect durable executions across team, namespace,
+Temporal Nexus connects durable executions across team, namespace,
 region, and cloud boundaries. It promotes a more modular architecture for sharing a subset of your team’s capabilities
 via well-defined service API contracts for other teams to use, that abstract underlying Temporal primitives, like
 Workflows, or execute arbitrary code.
@@ -24,7 +24,8 @@ This sample shows how to use Temporal for authoring a Nexus service and call it 
    site](https://learn.temporal.io/getting_started/go/dev_environment/#set-up-a-local-temporal-service-for-development-with-temporal-cli)
    to install Temporal CLI.
 
-> NOTE: The recommended version is at least v1.3.0.
+Use a server/CLI with Nexus endpoints enabled; the commands below require that
+capability. Build callers and handler workflows with the matching native tgo.
 
 ### Spin up environment
 

@@ -15,19 +15,44 @@ GCP Cloud Run contrib plugins together.
 - A [Temporal Cloud](https://temporal.io/cloud) namespace or reachable self-hosted cluster
 - The `gcloud` CLI configured for a project with the Cloud Run, Cloud Build, Cloud Trace, and
   Monitoring APIs enabled
-- Go 1.26+
+- The matching native tgo toolchain and sibling SDK/host-SDK workspace from
+  [root setup](../../README.md#setup)
 
 The worker and starter load their connection from the environment via
 [`envconfig`](https://pkg.go.dev/go.temporal.io/sdk/contrib/envconfig): set `TEMPORAL_ADDRESS`,
 `TEMPORAL_NAMESPACE`, and `TEMPORAL_API_KEY` (or a `temporal.toml`).
 
+## Native build and deployment scope
+
+The checked-in Dockerfile/cloudbuild template invokes stock Go and does not yet
+build this native workspace. Cloud deployment is not covered by the local unit
+suite. Build the worker with tgo from the repository root and package the result
+in a runtime image; select GOARCH for the deployment target:
+
+```sh
+mkdir -p /tmp/native-cloudrun
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 tgo build -trimpath \
+  -o /tmp/native-cloudrun/cloud-run-worker ./gcp/cloudrun/worker
+cat > /tmp/native-cloudrun/Dockerfile <<'DOCKERFILE'
+FROM gcr.io/distroless/base-debian12:nonroot
+COPY cloud-run-worker /cloud-run-worker
+ENTRYPOINT ["/cloud-run-worker"]
+DOCKERFILE
+docker build --platform linux/amd64 -t <IMAGE> /tmp/native-cloudrun
+```
+
+Push that image with the deployment's configured registry tooling, then set it
+in worker-pool.yaml. The identity/collector/credentials setup below is host
+infrastructure. No native workflow spans are configured by this sample's host
+plugin alone; applications needing them configure a native interceptor/exporter.
+
 ## Deploy to a Cloud Run worker pool
 
 ```bash
-# 1. Create the Artifact Registry repo (once), then build and push the image.
+# 1. Create the registry, then push the tgo-built runtime image above.
 gcloud artifacts repositories create <REPO> --repository-format=docker --location=<REGION>
-gcloud builds submit --config=gcp/cloudrun/cloudbuild.yaml \
-  --substitutions=_IMAGE=<REGION>-docker.pkg.dev/<PROJECT>/<REPO>/cloud-run-worker:latest .
+docker tag <IMAGE> <REGION>-docker.pkg.dev/<PROJECT>/<REPO>/cloud-run-worker:latest
+docker push <REGION>-docker.pkg.dev/<PROJECT>/<REPO>/cloud-run-worker:latest
 
 # 2. Store the collector config and API key in Secret Manager.
 gcloud secrets create otel-collector-config --data-file=gcp/cloudrun/otel-collector-config.yaml
