@@ -3,7 +3,6 @@ package testbridge
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"isolate"
 
@@ -13,11 +12,11 @@ import (
 func ReplyStart(command *isolate.Command, start workflow.PayloadStart) {
 	// Assert the protocol independently of the SDK's internal envelope helper.
 	// ISOL followed by protocol, metadata, API and determinism versions (uint32 LE).
-	header := []byte{'I', 'S', 'O', 'L', 6, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0}
+	header := []byte{'I', 'S', 'O', 'L', 7, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0}
 	if command.Op != workflow.OpStartPayloads || !bytes.Equal(command.Payload, header) {
 		panic(fmt.Sprintf("unexpected startup contract: op=%d payload=%x", command.Op, command.Payload))
 	}
-	body, err := json.Marshal(start)
+	body, err := workflow.MarshalTransport(start)
 	if err != nil {
 		panic(err)
 	}

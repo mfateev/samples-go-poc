@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"isolate"
@@ -14,9 +13,7 @@ import (
 	"github.com/mfateev/samples-go-poc/goroutines"
 	"github.com/mfateev/samples-go-poc/internal/testbridge"
 	"github.com/mfateev/sdk-go-poc/workflow"
-	commonpb "go.temporal.io/api/common/v1"
 	"go.temporal.io/sdk/converter"
-	"google.golang.org/protobuf/proto"
 )
 
 func main() {
@@ -61,14 +58,14 @@ func run(handle isolate.Handle, names []string, failed bool) {
 				}
 				if command != nil && command.Op == workflow.OpCancellableCall {
 					var request workflow.CallRequest
-					if err := json.Unmarshal(command.Payload, &request); err != nil {
+					if err := workflow.UnmarshalTransport(command.Payload, &request); err != nil {
 						panic(err)
 					}
 					command.Op, command.Payload = request.Op, request.Payload
 				}
 				if command != nil && command.Op == workflow.OpAwaitActivity {
 					var id uint64
-					check(json.Unmarshal(command.Payload, &id))
+					check(workflow.UnmarshalTransport(command.Payload, &id))
 					awaits[id] = command
 					if op != workflow.OpAwaitActivity {
 						continue
@@ -86,18 +83,15 @@ func run(handle isolate.Handle, names []string, failed bool) {
 	}
 	input, err := converter.GetDefaultDataConverter().ToPayloads(names)
 	check(err)
-	inputBytes, err := proto.Marshal(input)
-	check(err)
-	testbridge.ReplyStart(next(workflow.OpStartPayloads), workflow.PayloadStart{Name: handle.Name(), Payloads: inputBytes})
+	testbridge.ReplyStart(next(workflow.OpStartPayloads), workflow.PayloadStart{Name: handle.Name(), Payloads: input})
 	var ids []uint64
 	for _, name := range names {
 		command := next(workflow.OpScheduleActivity)
 		var request workflow.ActivityPayloadRequest
-		check(json.Unmarshal(command.Payload, &request))
-		var args commonpb.Payloads
-		check(proto.Unmarshal(request.Payloads, &args))
+		check(workflow.UnmarshalTransport(command.Payload, &request))
+		args := request.Payloads
 		var input string
-		check(converter.GetDefaultDataConverter().FromPayloads(&args, &input))
+		check(converter.GetDefaultDataConverter().FromPayloads(args, &input))
 		if len(args.Payloads) != 1 {
 			panic("wrong greeting argument count")
 		}
@@ -119,10 +113,9 @@ func run(handle isolate.Handle, names []string, failed bool) {
 			}
 			result, err := converter.GetDefaultDataConverter().ToPayloads("Hello " + names[index] + "!")
 			check(err)
-			encoded, err := proto.Marshal(result)
-			check(err)
-			outcome := workflow.ActivityOutcome{Payloads: encoded}
+			outcome := workflow.ActivityOutcome{Payloads: result}
 			if cause != nil {
+				outcome.Failed = true
 				outcome.Error = cause.Error()
 			}
 			awaits[ids[index]].Reply(marshal(outcome), nil)
@@ -131,7 +124,7 @@ func run(handle isolate.Handle, names []string, failed bool) {
 	}
 	command := next(workflow.OpCompletePayloads)
 	var completion workflow.PayloadCompletion
-	check(json.Unmarshal(command.Payload, &completion))
+	check(workflow.UnmarshalTransport(command.Payload, &completion))
 	if failed {
 		if completion.Error != "greeting failed" {
 			panic(fmt.Sprintf("error = %q", completion.Error))
@@ -140,10 +133,9 @@ func run(handle isolate.Handle, names []string, failed bool) {
 		if completion.Error != "" {
 			panic(completion.Error)
 		}
-		var payloads commonpb.Payloads
-		check(proto.Unmarshal(completion.Payloads, &payloads))
+		payloads := completion.Payloads
 		var greetings []string
-		check(converter.GetDefaultDataConverter().FromPayloads(&payloads, &greetings))
+		check(converter.GetDefaultDataConverter().FromPayloads(payloads, &greetings))
 		want := make([]string, len(names))
 		for index, name := range names {
 			want[index] = "Hello " + name + "!"
@@ -161,4 +153,8 @@ func check(err error) {
 		panic(err)
 	}
 }
-func marshal(value any) []byte { data, err := json.Marshal(value); check(err); return data }
+func marshal(value any) []byte {
+	data, err := workflow.MarshalTransport(value)
+	check(err)
+	return data
+}

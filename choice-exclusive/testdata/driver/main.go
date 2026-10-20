@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"isolate"
@@ -15,7 +14,6 @@ import (
 	"github.com/mfateev/sdk-go-poc/workflow"
 	commonpb "go.temporal.io/api/common/v1"
 	"go.temporal.io/sdk/converter"
-	"google.golang.org/protobuf/proto"
 )
 
 func main() {
@@ -57,7 +55,7 @@ func run(handle isolate.Handle, selected string, getErr, orderErr error, wantErr
 				}
 				if ok && command.Op == workflow.OpCancellableCall {
 					var request workflow.CallRequest
-					check(json.Unmarshal(command.Payload, &request))
+					check(workflow.UnmarshalTransport(command.Payload, &request))
 					command.Op, command.Payload = request.Op, request.Payload
 				}
 				if !ok || command.Op != op {
@@ -87,8 +85,8 @@ func run(handle isolate.Handle, selected string, getErr, orderErr error, wantErr
 	}
 	completion := next(workflow.OpCompletePayloads)
 	var result workflow.PayloadCompletion
-	check(json.Unmarshal(completion.Payload, &result))
-	if result.Error != wantErr || len(result.Payloads) != 0 {
+	check(workflow.UnmarshalTransport(completion.Payload, &result))
+	if result.Error != wantErr || len(result.Payloads.GetPayloads()) != 0 {
 		panic(fmt.Sprintf("completion = %+v, expected error %q and no result", result, wantErr))
 	}
 	completion.Reply(nil, nil)
@@ -97,19 +95,18 @@ func run(handle isolate.Handle, selected string, getErr, orderErr error, wantErr
 
 func validateActivity(command *isolate.Command, name, input string) {
 	var request workflow.ActivityPayloadRequest
-	check(json.Unmarshal(command.Payload, &request))
-	var payloads commonpb.Payloads
-	check(proto.Unmarshal(request.Payloads, &payloads))
+	check(workflow.UnmarshalTransport(command.Payload, &request))
+	payloads := request.Payloads
 	wantCount := 1
 	if name == "GetOrder" {
 		wantCount = 0
 	}
-	if len(payloads.Payloads) != wantCount {
+	if len(payloads.GetPayloads()) != wantCount {
 		panic("wrong activity argument count")
 	}
 	var decoded string
 	if wantCount != 0 {
-		check(converter.GetDefaultDataConverter().FromPayloads(&payloads, &decoded))
+		check(converter.GetDefaultDataConverter().FromPayloads(payloads, &decoded))
 	}
 	if !request.Function || request.Name != name || decoded != input || request.Options == nil || request.Options.StartToCloseTimeout != 10*time.Second {
 		panic(fmt.Sprintf("activity = %+v, expected %s(%q)", request, name, input))
@@ -124,22 +121,21 @@ func check(err error) {
 }
 
 func marshal(value any) []byte {
-	data, err := json.Marshal(value)
+	data, err := workflow.MarshalTransport(value)
 	check(err)
 	return data
 }
 
-func encodeResult(value any) []byte {
+func encodeResult(value any) *commonpb.Payloads {
 	payloads, err := converter.GetDefaultDataConverter().ToPayloads(value)
 	check(err)
-	data, err := proto.Marshal(payloads)
-	check(err)
-	return data
+	return payloads
 }
 
-func activityOutcome(payload []byte, err error) []byte {
+func activityOutcome(payload *commonpb.Payloads, err error) []byte {
 	o := workflow.ActivityOutcome{Payloads: payload}
 	if err != nil {
+		o.Failed = true
 		o.Error = err.Error()
 	}
 	return marshal(o)

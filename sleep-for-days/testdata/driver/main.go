@@ -14,9 +14,7 @@ import (
 	"github.com/mfateev/samples-go-poc/internal/testbridge"
 	sleepfordays "github.com/mfateev/samples-go-poc/sleep-for-days"
 	"github.com/mfateev/sdk-go-poc/workflow"
-	commonpb "go.temporal.io/api/common/v1"
 	"go.temporal.io/sdk/converter"
-	"google.golang.org/protobuf/proto"
 )
 
 func main() {
@@ -79,7 +77,7 @@ func main() {
 		}
 		if command.Op == workflow.OpCancellableCall {
 			var request workflow.CallRequest
-			check(json.Unmarshal(command.Payload, &request))
+			check(workflow.UnmarshalTransport(command.Payload, &request))
 			command.Op, command.Payload = request.Op, request.Payload
 		}
 		operations = append(operations, command.Op)
@@ -93,11 +91,10 @@ func main() {
 				panic("email scheduled after terminal event")
 			}
 			var request workflow.ActivityPayloadRequest
-			check(json.Unmarshal(command.Payload, &request))
-			var args commonpb.Payloads
-			check(proto.Unmarshal(request.Payloads, &args))
+			check(workflow.UnmarshalTransport(command.Payload, &request))
+			args := request.Payloads
 			var message string
-			check(converter.GetDefaultDataConverter().FromPayloads(&args, &message))
+			check(converter.GetDefaultDataConverter().FromPayloads(args, &message))
 			if len(args.Payloads) != 1 || request.ID == 0 || request.Name != "SendEmail" || message != "Sleeping for 30 days" || request.Options == nil || request.Options.StartToCloseTimeout != 10*time.Second {
 				panic("unexpected email request")
 			}
@@ -105,7 +102,7 @@ func main() {
 			command.Reply(nil, nil)
 		case workflow.OpAwaitActivity:
 			var id uint64
-			check(json.Unmarshal(command.Payload, &id))
+			check(workflow.UnmarshalTransport(command.Payload, &id))
 			if waits[id] != nil {
 				panic("duplicate email result wait")
 			}
@@ -122,7 +119,7 @@ func main() {
 			timer = command
 		case workflow.OpRegisterSignal:
 			var registration workflow.SignalRegistration
-			check(json.Unmarshal(command.Payload, &registration))
+			check(workflow.UnmarshalTransport(command.Payload, &registration))
 			if registration.Name != "complete" || registration.Options != (workflow.SignalChannelOptions{}) {
 				panic("unexpected signal registration")
 			}
@@ -142,7 +139,7 @@ func main() {
 				panic("workflow completed before any terminal event")
 			}
 			var result workflow.PayloadCompletion
-			check(json.Unmarshal(command.Payload, &result))
+			check(workflow.UnmarshalTransport(command.Payload, &result))
 			if scenario == "failed-email" || scenario == "late-failed-email" {
 				if !result.Failed || result.Error != "email failed" || result.Canceled {
 					panic(fmt.Sprintf("email error not propagated: %+v", result))
@@ -155,10 +152,9 @@ func main() {
 				if result.Failed || result.Error != "" {
 					panic("successful workflow failed: " + result.Error)
 				}
-				var payloads commonpb.Payloads
-				check(proto.Unmarshal(result.Payloads, &payloads))
+				payloads := result.Payloads
 				var value string
-				check(converter.GetDefaultDataConverter().FromPayloads(&payloads, &value))
+				check(converter.GetDefaultDataConverter().FromPayloads(payloads, &value))
 				if value != "done" {
 					panic("unexpected workflow result: " + value)
 				}
@@ -237,13 +233,11 @@ func check(err error) {
 func completeSignal() []byte {
 	payloads, err := converter.GetDefaultDataConverter().ToPayloads([]byte(nil))
 	check(err)
-	raw, err := proto.Marshal(payloads)
-	check(err)
-	return marshal(workflow.Signal{Name: "complete", Payloads: raw})
+	return marshal(workflow.Signal{Name: "complete", Payloads: payloads})
 }
 
 func marshal(value any) []byte {
-	data, err := json.Marshal(value)
+	data, err := workflow.MarshalTransport(value)
 	check(err)
 	return data
 }
